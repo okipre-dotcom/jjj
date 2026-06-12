@@ -1,0 +1,21 @@
+{
+ "name": "FP1級 応用編トレーナー",
+ "short_name": "FP1級",
+ "start_url": "./FP1%E7%B4%9A%E5%BF%9C%E7%94%A8%E7%B7%A8%E3%83%88%E3%83%AC%E3%83%BC%E3%83%8A%E3%83%BC_v4.5_PWA.html",
+ "display": "standalone",
+ "background_color": "#f4f6fa",
+ "theme_color": "#2563eb",
+ "lang": "ja",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  }
+ ]
+}
