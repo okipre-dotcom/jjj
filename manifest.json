@@ -1,7 +1,7 @@
 {
  "name": "FP1級 応用編トレーナー",
  "short_name": "FP1級",
- "start_url": "./FP1tra_v5.5_PWA.html",
+ "start_url": "./FP1tra_v5.6_PWA.html",
  "display": "standalone",
  "background_color": "#f4f6fa",
  "theme_color": "#2563eb",
