@@ -18,8 +18,8 @@
    (見当たらなければ「Add file」→「Upload files」)
 2. 「choose your files」→ ファイルアプリからこのフォルダ(GitHub公開用)の中身を全部選ぶ
    - index.html
-   - FP1tra_v5.00_PWA.html (PWA版)
-   - FP1tra_v5.00.html (非PWA版・予備)
+   - FP1tra_v5.1_PWA.html (PWA版)
+   - FP1tra_v5.1.html (非PWA版・予備)
    - sw.js / manifest.json / icon-192.png / icon-512.png
    ※2.8MBのファイルが2つあるので少し時間がかかります
 3. 下の「Commit changes」をタップ
