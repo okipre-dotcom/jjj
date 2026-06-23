@@ -224,7 +224,7 @@ html[data-theme="dark"] .expl .ansx{background:rgba(34,197,94,.15)}
 <div class="chips" id="calcChips"></div>
 <div id="cArea"></div>
 </section>
-<section id="paneK" class="hidden"><div class="chips" id="examChips"></div><div class="chips"><button id="kmTap" class="on" onclick="setKMode(false)">👆 タップ開示</button><button id="kmIn" onclick="setKMode(true)">⌨️ 入力採点</button></div><div id="kArea"></div></section>
+<section id="paneK" class="hidden"><div class="chips" id="kViewBar"><button id="kvY" class="on" onclick="setKView('year')">📅 年別</button><button id="kvS" onclick="setKView('seq')">🎯 分野別・1問ずつ</button></div><div class="chips" id="examChips"></div><div class="chips hidden" id="kSeqFields"></div><div class="chips"><button id="kmTap" class="on" onclick="setKMode(false)">👆 タップ開示</button><button id="kmIn" onclick="setKMode(true)">⌨️ 入力採点</button></div><div id="kArea"></div></section>
 <section id="paneM" class="hidden"><div class="chips" id="memoChips"></div><div id="mArea"></div></section>
 <section id="paneS" class="hidden"><div id="sArea"></div></section>
 </main>
@@ -2277,8 +2277,68 @@ ${renshuCloze(inst.process)}</div>
 const KAKO=JSON.parse(document.getElementById('kdata').textContent);
 let ksrs=store.get('ksrs',{});
 let curExam=store.get('exam',null), curDm=-1;
+var KFLAT=null,kView='year',kSeqField='ALL',kSeqList=[],kSeqPos=0;
+function splitExplByQ(expl,qnos){
+  if(!expl)return qnos.map(function(){return''});
+  var has=qnos.slice(1).some(function(n){return expl.indexOf('【問'+n+'】')>=0});
+  if(!has)return qnos.map(function(){return expl});
+  var out=[],rest=expl;
+  for(var i=0;i<qnos.length;i++){
+    var nx=(i+1<qnos.length)?('【問'+qnos[i+1]+'】'):null;
+    if(nx&&rest.indexOf(nx)>=0){var p=rest.indexOf(nx);out.push(rest.slice(0,p).split('【問'+qnos[i]+'】').join('').trim());rest=rest.slice(p);}
+    else{out.push(rest.split('【問'+qnos[i]+'】').join('').trim());rest='';}
+  }
+  return out;
+}
+function buildKFLAT(){
+  KFLAT=[];
+  Object.keys(KAKO).forEach(function(ek){
+    if(!/^\d{4}_/.test(ek))return;
+    var ex=KAKO[ek];
+    ex.dm.forEach(function(d,di){
+      var segs=splitExplByQ(d.expl,d.qs.map(function(q){return q.qno}));
+      d.qs.forEach(function(q,qi){
+        KFLAT.push({exam:ek,name:ex.name,field:d.field,qno:q.qno,set:d.set,genchu:ex.genchu||'',q:q.q,a:q.a,expl:segs[qi]||d.expl});
+      });
+    });
+  });
+}
+function shuffleArr(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}}
+function renderKSeqFields(){
+  var fs=[['ALL','全分野'],['A',FIELDS.A],['C',FIELDS.C],['D',FIELDS.D],['E',FIELDS.E],['F',FIELDS.F]];
+  var el=document.getElementById('kSeqFields');if(!el)return;
+  el.innerHTML=fs.map(function(p){return '<button class="'+(kSeqField===p[0]?'on':'')+'" onclick="startKSeq(\''+p[0]+'\')">'+p[1]+'</button>'}).join('');
+}
+function startKSeq(f){kSeqField=f;store.set('kSeqField',f);if(!KFLAT)buildKFLAT();kSeqList=KFLAT.filter(function(x){return f==='ALL'||x.field===f});shuffleArr(kSeqList);kSeqPos=0;renderKako();}
+function setKView(v){kView=v;store.set('kView',v);renderKako();}
+function ksqReveal(){var a=document.getElementById('ksqAns'),b=document.getElementById('ksqRev');if(a)a.classList.remove('hidden');if(b)b.classList.add('hidden');}
+function ksqGrade(ok){var it=kSeqList[kSeqPos];if(it){grade(ksrs,'k'+it.exam+'-'+it.qno,ok);try{beep(ok?[520,650,780]:[300])}catch(e){}}ksqNext();}
+function ksqNext(){kSeqPos++;if(kSeqPos>=kSeqList.length){shuffleArr(kSeqList);kSeqPos=0;}renderKSeqOne();}
+function renderKSeqOne(){
+  if(!KFLAT)buildKFLAT();
+  if(!kSeqList.length){kSeqList=KFLAT.filter(function(x){return kSeqField==='ALL'||x.field===kSeqField});shuffleArr(kSeqList);kSeqPos=0;}
+  var it=kSeqList[kSeqPos];if(!it){document.getElementById('kArea').innerHTML='<div class="small">該当する問題がありません</div>';return;}
+  var id='k'+it.exam+'-'+it.qno,r=ksrs[id],hasA=Object.keys(it.a).length>0;
+  var anstbl=hasA?('<table class="anstable">'+Object.entries(it.a).map(function(e){return '<tr><td>'+(CIRC[e[0]-1]||e[0])+'</td><td>'+esc(e[1])+'</td></tr>'}).join('')+'</table>'):'<div class="small">模範解答は解説内に記載</div>';
+  var html='<div class="meta"><span class="badge">'+FIELDS[it.field]+'</span><span class="badge">'+it.name+' 問'+it.qno+'</span><span>'+(kSeqPos+1)+'/'+kSeqList.length+'・'+(r?'学習'+r.seen+'回':'未学習')+'</span></div>';
+  if(it.genchu)html+='<div class="qb" style="background:var(--warn);color:#fff">'+esc(it.genchu)+'</div>';
+  html+='<div class="card"><details><summary>《設例》</summary><div class="qtext">'+esc(it.set)+'</div></details>'
+    +'<div class="qtext" style="margin-top:10px"><b>《問'+it.qno+'》</b><br>'+esc(it.q)+'</div>'
+    +'<div class="btnrow" id="ksqRev"><button class="btn pri" onclick="ksqReveal()">模範解答・解説を表示</button></div>'
+    +'<div class="hidden" id="ksqAns">'+anstbl
+    +'<details open><summary>解説</summary><div class="expl">'+fmtExpl(it.expl)+'</div></details>'
+    +'<div class="btnrow"><button class="btn ok" onclick="ksqGrade(true)">○ できた</button><button class="btn ng" onclick="ksqGrade(false)">× できなかった</button></div></div>'
+    +'<div class="btnrow"><button class="btn ghost" onclick="ksqNext()">次の問題 →</button></div></div>';
+  document.getElementById('kArea').innerHTML=html;
+  curDm=-1;curResHtml=it.set?('<div class="qtext">'+esc(it.set)+'</div>'):'';try{updateDataFab()}catch(e){}
+}
 function renderKako(){
   try{renderKModeChips()}catch(e){}
+  var _kvY=document.getElementById('kvY'),_kvS=document.getElementById('kvS');
+  if(_kvY)_kvY.classList.toggle('on',kView==='year');if(_kvS)_kvS.classList.toggle('on',kView==='seq');
+  var _ec=document.getElementById('examChips'),_sf=document.getElementById('kSeqFields');
+  if(kView==='seq'){if(_ec)_ec.classList.add('hidden');if(_sf){_sf.classList.remove('hidden');renderKSeqFields();}renderKSeqOne();return;}
+  if(_ec)_ec.classList.remove('hidden');if(_sf)_sf.classList.add('hidden');
   const keys=Object.keys(KAKO).sort().reverse();
   if(!curExam||!KAKO[curExam])curExam=keys[0];
   const el=document.getElementById('examChips');
@@ -2307,67 +2367,4 @@ function renderKako(){
 function setExam(k){curExam=k;store.set('exam',k);renderKako()}
 function setKYear(y){if(y==='moshi'){curExam='moshi'}else{const mm=Object.keys(KAKO).filter(k=>k.startsWith(y+'_')).map(k=>k.split('_')[1]).sort((a,b)=>a-b);const cm=(/^\d{4}_/.test(curExam)?curExam.split('_')[1]:null);curExam=(cm&&mm.includes(cm))?y+'_'+cm:y+'_'+mm[0]}store.set('exam',curExam);renderKako()}
 function setKMonth(m){const y=curExam.split('_')[0];curExam=y+'_'+m;store.set('exam',curExam);renderKako()}
-function openDm(i){
-  curDm=i;
-  const d=KAKO[curExam].dm[i];
-  curResHtml='<div class="qtext">'+esc(d.set)+'</div>'+(d.data?'<div class="qdata">'+d.data+'</div>':'');try{updateDataFab()}catch(e){}
-  let html=`<div class="btnrow"><button class="btn ghost" onclick="renderKako()">← ${KAKO[curExam].name}の一覧</button></div>`;
-  if(KAKO[curExam].genchu)html+=`<div class="qb" style="background:var(--warn);color:#fff">${esc(KAKO[curExam].genchu)}</div>`;
-  html+=`<div class="card"><div class="meta"><span class="badge">第${i+1}問 ${d.field}分野</span><span class="badge">${KAKO[curExam].name} 本試験</span></div>
-  <details open><summary>《設例》</summary><div class="qtext">${esc(d.set)}</div>${d.data?`<div class="qdata">${d.data}</div>`:''}</details></div>`;
-  d.qs.forEach((q,qi)=>{
-    const id='k'+curExam+'-'+q.qno;
-    const r=ksrs[id];
-    let anstbl='';
-    if(Object.keys(q.a).length){
-      anstbl='<table class="anstable">'+Object.entries(q.a).map(([n,v])=>`<tr><td>${CIRC[n-1]||n}</td><td>${esc(v)}</td></tr>`).join('')+'</table>';
-    }else{anstbl='<div class="small">模範解答は下の解説内に記載</div>'}
-    const kIn=store.get('kInput',false);const hasA=Object.keys(q.a).length>0;
-    let inputBlock='';
-    if(kIn&&hasA){inputBlock='<div style="margin:8px 0">'+Object.entries(q.a).map(([n,v])=>`<div style="display:flex;align-items:center;gap:6px;margin:4px 0"><span class="badge">${CIRC[n-1]||n}</span><input class="ninput kbk" data-a="${esc(v)}" data-n="${n}" inputmode="text" autocomplete="off" autocorrect="off" spellcheck="false" style="flex:1"></div>`).join('')+'</div>';}
-    html+=`<div class="card" id="kc${qi}">
-    <div class="meta"><b>《問${q.qno}》</b><span>${r?`学習${r.seen}回/Lv${r.box}`:'未学習'}</span></div>
-    <div class="qtext">${esc(q.q)}</div>
-    ${inputBlock}
-    <div class="btnrow" id="krev${qi}">${(kIn&&hasA)?`<button class="btn pri" onclick="kgradeInput(${qi},'${id}')">採点する</button>`:`<button class="btn pri" onclick="krev(${qi})">模範解答を表示</button>`}</div>
-    <div class="gradehint hidden" id="kHint${qi}"></div>
-    <div class="hidden" id="kans${qi}">
-      ${anstbl}
-      <div class="btnrow">
-        <button class="btn ok" onclick="kgrade(${qi},'${id}',true)">○ できた</button>
-        <button class="btn ng" onclick="kgrade(${qi},'${id}',false)">× できなかった</button>
-      </div>
-    </div></div>`;
-  });
-  html+=`<div class="card"><details><summary>この大問の解説(全文)</summary><div class="expl">${fmtExpl(d.expl||'(未収録)')}</div></details></div>`;
-  html+=`<div class="btnrow"><button class="btn ghost" onclick="renderKako()">← 一覧に戻る</button></div>`;
-  document.getElementById('kArea').innerHTML=html;
-}
-function krev(qi){
-  document.getElementById('krev'+qi).classList.add('hidden');
-  document.getElementById('kans'+qi).classList.remove('hidden');
-}
-function kgradeInput(qi,id){
-  const ins=[...document.querySelectorAll('#kc'+qi+' .kbk')];let ok=0;
-  ins.forEach(inp=>{const good=softEq(inp.value,inp.dataset.a);inp.classList.remove('good','bad');inp.classList.add(good?'good':'bad');inp.readOnly=true;if(good)ok++;});
-  document.getElementById('krev'+qi).classList.add('hidden');
-  document.getElementById('kans'+qi).classList.remove('hidden');
-  const h=document.getElementById('kHint'+qi);if(h){h.classList.remove('hidden');h.textContent=`自動判定: 正解 ${ok}/${ins.length}。記録は下のボタンで(訂正可)`;}
-}
-function setKMode(v){store.set('kInput',v);renderKModeChips();if(curDm>=0)openDm(curDm);else renderKako();try{updateCalcFab()}catch(e){}}
-function renderKModeChips(){const v=store.get('kInput',false);const a=document.getElementById('kmTap'),b=document.getElementById('kmIn');if(a)a.classList.toggle('on',!v);if(b)b.classList.toggle('on',v);}
-function kgrade(qi,id,ok){
-  grade(ksrs,id,ok);
-  const card=document.getElementById('kc'+qi);
-  if(ok){beep([520,650,780]);card.classList.add('flash')}else{card.classList.add('shake')}
-  const meta=card.querySelector('.meta span:last-child');
-  const r=ksrs[id];meta.textContent=`学習${r.seen}回/Lv${r.box}`;
-  card.querySelector('#kans'+qi+' .btnrow').innerHTML='<span class="small">'+(ok?'✓ 記録しました(SM-2で復習予定に登録)':'✗ 10分後に再出題対象になります')+'</span>';
-}
-</script>
-<button id="fab" onclick="uiAdvance()">次へ ▶</button>
-<button id="calcFab" onclick="toggleCalc()" title="簡易電卓">🧮</button>
-<button id="guideFab" onclick="toggleGuide()" title="誘導(計算過程)">💡</button>
-<div id="guidePanel"><div class="dpbar"><b>💡 誘導（計算過程）</b><button class="btn ghost" style="padding:4px 10px;min-width:0" onclick="toggleGuide()">✕</button></div><div id="guideBody"></div></div>
-<button id="dataFab" onclick="toggleData()" title="設例の資料">📊</button>
-<div id="dataPanel"><div class="dpbar"><b>📊 設例の資料
+functio
