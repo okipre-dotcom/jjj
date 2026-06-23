@@ -2367,4 +2367,78 @@ function renderKako(){
 function setExam(k){curExam=k;store.set('exam',k);renderKako()}
 function setKYear(y){if(y==='moshi'){curExam='moshi'}else{const mm=Object.keys(KAKO).filter(k=>k.startsWith(y+'_')).map(k=>k.split('_')[1]).sort((a,b)=>a-b);const cm=(/^\d{4}_/.test(curExam)?curExam.split('_')[1]:null);curExam=(cm&&mm.includes(cm))?y+'_'+cm:y+'_'+mm[0]}store.set('exam',curExam);renderKako()}
 function setKMonth(m){const y=curExam.split('_')[0];curExam=y+'_'+m;store.set('exam',curExam);renderKako()}
-functio
+function openDm(i){
+  curDm=i;
+  const d=KAKO[curExam].dm[i];
+  curResHtml='<div class="qtext">'+esc(d.set)+'</div>'+(d.data?'<div class="qdata">'+d.data+'</div>':'');try{updateDataFab()}catch(e){}
+  let html=`<div class="btnrow"><button class="btn ghost" onclick="renderKako()">← ${KAKO[curExam].name}の一覧</button></div>`;
+  if(KAKO[curExam].genchu)html+=`<div class="qb" style="background:var(--warn);color:#fff">${esc(KAKO[curExam].genchu)}</div>`;
+  html+=`<div class="card"><div class="meta"><span class="badge">第${i+1}問 ${d.field}分野</span><span class="badge">${KAKO[curExam].name} 本試験</span></div>
+  <details open><summary>《設例》</summary><div class="qtext">${esc(d.set)}</div>${d.data?`<div class="qdata">${d.data}</div>`:''}</details></div>`;
+  d.qs.forEach((q,qi)=>{
+    const id='k'+curExam+'-'+q.qno;
+    const r=ksrs[id];
+    let anstbl='';
+    if(Object.keys(q.a).length){
+      anstbl='<table class="anstable">'+Object.entries(q.a).map(([n,v])=>`<tr><td>${CIRC[n-1]||n}</td><td>${esc(v)}</td></tr>`).join('')+'</table>';
+    }else{anstbl='<div class="small">模範解答は下の解説内に記載</div>'}
+    const kIn=store.get('kInput',false);const hasA=Object.keys(q.a).length>0;
+    let inputBlock='';
+    if(kIn&&hasA){inputBlock='<div style="margin:8px 0">'+Object.entries(q.a).map(([n,v])=>`<div style="display:flex;align-items:center;gap:6px;margin:4px 0"><span class="badge">${CIRC[n-1]||n}</span><input class="ninput kbk" data-a="${esc(v)}" data-n="${n}" inputmode="text" autocomplete="off" autocorrect="off" spellcheck="false" style="flex:1"></div>`).join('')+'</div>';}
+    html+=`<div class="card" id="kc${qi}">
+    <div class="meta"><b>《問${q.qno}》</b><span>${r?`学習${r.seen}回/Lv${r.box}`:'未学習'}</span></div>
+    <div class="qtext">${esc(q.q)}</div>
+    ${inputBlock}
+    <div class="btnrow" id="krev${qi}">${(kIn&&hasA)?`<button class="btn pri" onclick="kgradeInput(${qi},'${id}')">採点する</button>`:`<button class="btn pri" onclick="krev(${qi})">模範解答を表示</button>`}</div>
+    <div class="gradehint hidden" id="kHint${qi}"></div>
+    <div class="hidden" id="kans${qi}">
+      ${anstbl}
+      <div class="btnrow">
+        <button class="btn ok" onclick="kgrade(${qi},'${id}',true)">○ できた</button>
+        <button class="btn ng" onclick="kgrade(${qi},'${id}',false)">× できなかった</button>
+      </div>
+    </div></div>`;
+  });
+  html+=`<div class="card"><details><summary>この大問の解説(全文)</summary><div class="expl">${fmtExpl(d.expl||'(未収録)')}</div></details></div>`;
+  html+=`<div class="btnrow"><button class="btn ghost" onclick="renderKako()">← 一覧に戻る</button></div>`;
+  document.getElementById('kArea').innerHTML=html;
+}
+function krev(qi){
+  document.getElementById('krev'+qi).classList.add('hidden');
+  document.getElementById('kans'+qi).classList.remove('hidden');
+}
+function kgradeInput(qi,id){
+  const ins=[...document.querySelectorAll('#kc'+qi+' .kbk')];let ok=0;
+  ins.forEach(inp=>{const good=softEq(inp.value,inp.dataset.a);inp.classList.remove('good','bad');inp.classList.add(good?'good':'bad');inp.readOnly=true;if(good)ok++;});
+  document.getElementById('krev'+qi).classList.add('hidden');
+  document.getElementById('kans'+qi).classList.remove('hidden');
+  const h=document.getElementById('kHint'+qi);if(h){h.classList.remove('hidden');h.textContent=`自動判定: 正解 ${ok}/${ins.length}。記録は下のボタンで(訂正可)`;}
+}
+function setKMode(v){store.set('kInput',v);renderKModeChips();if(curDm>=0)openDm(curDm);else renderKako();try{updateCalcFab()}catch(e){}}
+function renderKModeChips(){const v=store.get('kInput',false);const a=document.getElementById('kmTap'),b=document.getElementById('kmIn');if(a)a.classList.toggle('on',!v);if(b)b.classList.toggle('on',v);}
+function kgrade(qi,id,ok){
+  grade(ksrs,id,ok);
+  const card=document.getElementById('kc'+qi);
+  if(ok){beep([520,650,780]);card.classList.add('flash')}else{card.classList.add('shake')}
+  const meta=card.querySelector('.meta span:last-child');
+  const r=ksrs[id];meta.textContent=`学習${r.seen}回/Lv${r.box}`;
+  card.querySelector('#kans'+qi+' .btnrow').innerHTML='<span class="small">'+(ok?'✓ 記録しました(SM-2で復習予定に登録)':'✗ 10分後に再出題対象になります')+'</span>';
+}
+</script>
+<button id="fab" onclick="uiAdvance()">次へ ▶</button>
+<button id="calcFab" onclick="toggleCalc()" title="簡易電卓">🧮</button>
+<button id="guideFab" onclick="toggleGuide()" title="誘導(計算過程)">💡</button>
+<div id="guidePanel"><div class="dpbar"><b>💡 誘導（計算過程）</b><button class="btn ghost" style="padding:4px 10px;min-width:0" onclick="toggleGuide()">✕</button></div><div id="guideBody"></div></div>
+<button id="dataFab" onclick="toggleData()" title="設例の資料">📊</button>
+<div id="dataPanel"><div class="dpbar"><b>📊 設例の資料</b><button class="btn ghost" style="padding:4px 10px;min-width:0" onclick="toggleData()">✕</button></div><div id="dataBody"></div></div>
+<div id="calcPad"><button id="calcClose" onclick="toggleCalc()">✕</button><div id="calcPrev"></div><div id="calcDisp">0</div>
+<div class="calcgrid">
+<button class="fn" onclick="calcKey('C')">C</button><button class="fn" onclick="calcKey('B')">⌫</button><button class="op" onclick="calcKey('(')">(</button><button class="op" onclick="calcKey(')')">)</button>
+<button onclick="calcKey('7')">7</button><button onclick="calcKey('8')">8</button><button onclick="calcKey('9')">9</button><button class="op" onclick="calcKey('÷')">÷</button>
+<button onclick="calcKey('4')">4</button><button onclick="calcKey('5')">5</button><button onclick="calcKey('6')">6</button><button class="op" onclick="calcKey('×')">×</button>
+<button onclick="calcKey('1')">1</button><button onclick="calcKey('2')">2</button><button onclick="calcKey('3')">3</button><button class="op" onclick="calcKey('−')">−</button>
+<button onclick="calcKey('0')">0</button><button onclick="calcKey('.')">.</button><button class="eq" onclick="calcKey('=')">=</button><button class="op" onclick="calcKey('+')">+</button>
+</div></div>
+
+</body>
+</html>
