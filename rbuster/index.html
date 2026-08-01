@@ -180,7 +180,7 @@ body{background:var(--bg);color:var(--tx);font-family:"Yu Gothic UI","Meiryo",sy
 <div class="screen on" id="scrTitle">
   <div id="logo">立式バスター２</div>
   <div id="logoSub">FP1級 式の構造を暗記するタイピング</div>
-  <div id="verTag">v2.1 (2026-08-01)</div>
+  <div id="verTag">v2.2 (2026-08-01)</div>
   <div class="menu" id="titleMenu"></div>
   <div class="bestline" id="bestline"></div>
   <div class="imewarn">⚠ 日本語入力(IME)を<b>OFF</b>(半角英数)にしてプレイしてください</div>
@@ -225,13 +225,14 @@ body{background:var(--bg);color:var(--tx);font-family:"Yu Gothic UI","Meiryo",sy
     <h3>■ リズム暗記(ビートマニア風)</h3>
     画面上部にお題「自己資本＝<span style="color:var(--cyan)">？−？−？</span>」が出て、空欄①②③…のノーツが順に降ってきます。
     空欄に入る項目を<b>思い出してローマ字で打つ</b>とノーツが弾け、音階が鳴ります。式が完成するとコードが鳴り、次の式へ。
-    判定ラインを過ぎるとミス(❤−1)で正解が表示されます。ラインの近くで打つと「JUST!」ボーナス。
+    ライフは音ゲー標準の<b>グルーヴゲージ制</b>: ミスで減りますが<b>正解すれば回復</b>し、途中でゲームオーバーにはなりません(下げ止まりあり)。
+    コース完走時にゲージ<b>80%以上でクリア</b>。ラインの近くで打つと「JUST!」ボーナス。
     <h3>■ 練習(タイピング/4択クリック)</h3>
     落ちてこない静止画面でじっくり。<kbd>F2</kbd>またはボタンで「タイピング回答」⇔「4択クリック回答」を切替できます。
     4択は<kbd>1</kbd>〜<kbd>4</kbd>キーでも回答可能。全空欄を埋めると式の解説が表示されます。
     <h3>■ リズム暗記の回答方式</h3>
     リズム暗記は<b>タイピング回答</b>と<b>4択タップ回答</b>を選べます。4択はマウス/タッチ(iPad)/1〜4キーで回答。
-    誤答をタップすると即ミスなので、当てずっぽうは通用しません。選択肢は同じ分野の用語だけが出ます。
+    誤答をタップするとその空欄はミス(ゲージ減+正解表示)ですが、次の空欄から立て直せます。選択肢は同じ分野の用語だけが出ます。
     <h3>■ 復讐の地下室</h3>
     ミスした式が収監されます。3回完答で成仏(=記憶定着)。
     <h3>■ キー操作</h3>
@@ -1119,7 +1120,7 @@ function gotoList(fkey){
 // ---------- 共有ゲーム状態 ----------
 const G={
   running:false,mode:null,fkey:"ALL",diff:DIFFS[1],
-  hp:5,money:0,combo:0,maxCombo:0,
+  hp:5,groove:30,slotSeq:0,money:0,combo:0,maxCombo:0,
   keysOK:0,keysNG:0,hits:0,justs:0,
   slotsTotal:0,slotsFirstTry:0,
   course:[],ci:0,           // 出題する式列と現在位置
@@ -1133,7 +1134,7 @@ const G={
   transition:0,
 };
 function resetG(){
-  Object.assign(G,{hp:5,money:0,combo:0,maxCombo:0,keysOK:0,keysNG:0,hits:0,justs:0,
+  Object.assign(G,{hp:5,groove:30,slotSeq:0,money:0,combo:0,maxCombo:0,keysOK:0,keysNG:0,hits:0,justs:0,
     slotsTotal:0,slotsFirstTry:0,course:[],ci:0,slots:[],states:[],si:0,typer:null,hintLv:0,slotDirty:false,
     notes:[],noteTimer:0,spawned:0,choices:[],lockClick:false,beatT:0,beatN:0,time:0,missList:[],formulaMissed:false,transition:0});
   $("lanes").innerHTML="";
@@ -1166,6 +1167,7 @@ function loadFormulaRhythm(){
 function curF(){return G.course[G.ci];}
 function startSlot(){
   if(G.si>=G.slots.length)return;
+  G.slotSeq++;
   G.states[G.si]='active';
   const s=G.slots[G.si];
   G.typer=new Typer(s.target);
@@ -1270,7 +1272,8 @@ function answerChoiceR(i){
       else if(G.choices[k].ok)b.classList.add("ok");
       else b.classList.add("dim");
     });
-    setTimeout(()=>{if(G.running&&!G.transition)missSlot("誤答! ");},750);
+    const seq=G.slotSeq;
+    setTimeout(()=>{if(G.running&&G.slotSeq===seq&&G.transition<=0)missSlot("誤答! ");},750);
   }
 }
 function hitSlot(){
@@ -1285,6 +1288,7 @@ function hitSlot(){
   if(just)G.justs++;
   G.slotsTotal++;
   if(!G.slotDirty)G.slotsFirstTry++;
+  G.groove=clamp(G.groove+(just?3.5:2.5),2,100);
   const base=(5000+s.target.length*300)*(just?1.5:1)*(1+Math.min(G.combo,20)*0.04)*Math.pow(0.6,G.hintLv);
   const got=Math.round(base/100)*100;
   G.money+=got;
@@ -1303,10 +1307,13 @@ function hitSlot(){
 }
 function missSlot(label){
   const i=G.si,s=G.slots[i];
+  if(!s)return; // 競合(タイムアウトと誤答タップの同時発火)ガード
+  G.slotSeq++;
   G.states[i]='miss';
   G.slotsTotal++;
   G.combo=0;updateCombo();
-  G.hp--;
+  // グルーヴゲージ制(音ゲー標準): ミスで減るが下げ止まり2%。途中ゲームオーバーなし
+  G.groove=Math.max(2,G.groove-10);
   G.formulaMissed=true;
   sfx.miss();
   judgePop((label||"MISS… ")+"正解: "+s.disp,"var(--ng)");
@@ -1316,7 +1323,6 @@ function missSlot(label){
   if(n){n.el.remove();G.notes.splice(G.notes.indexOf(n),1);}
   G.si++;
   renderOdai();updateHud();
-  if(G.hp<=0){endGame("dead");return;}
   if(G.si>=G.slots.length)formulaComplete();
   else startSlot();
 }
@@ -1324,7 +1330,7 @@ function formulaComplete(){
   const f=curF();
   G.typer=null;
   sfx.chord();
-  if(!G.formulaMissed){G.money+=20000;bigMsg("式 完成!! +¥20,000","var(--gold)",36);}
+  if(!G.formulaMissed){G.money+=20000;G.groove=clamp(G.groove+5,2,100);bigMsg("式 完成!! +¥20,000","var(--gold)",36);}
   else bigMsg("次の式へ","var(--sub)",30);
   // 完成形+解説を短時間表示
   $("pAsk").innerHTML=`<span style="color:var(--ok)">✔ ${esc(f.name)}</span> — <span style="color:#e8d9a8">${esc(f.note||"")}</span>`;
@@ -1347,7 +1353,17 @@ function updateCombo(){
   else{n.style.display="none";l.style.display="none";}
 }
 function updateHud(){
-  $("hearts").textContent="❤".repeat(Math.max(0,G.hp))+"♡".repeat(Math.max(0,5-G.hp));
+  if(G.mode==="rhythm"){
+    const g=Math.round(G.groove);
+    const col=g>=80?"var(--gold)":g>=40?"var(--cyan)":"var(--ng)";
+    $("hearts").innerHTML=`<span style="font-size:11px;color:var(--sub);letter-spacing:1px">GROOVE</span>
+      <span style="display:inline-block;vertical-align:middle;width:150px;height:12px;border:1px solid var(--line);border-radius:6px;background:#0c1730;position:relative;margin:0 6px">
+        <span style="position:absolute;left:0;top:0;bottom:0;width:${g}%;background:${col};border-radius:5px;transition:width .25s"></span>
+        <span style="position:absolute;left:80%;top:-3px;bottom:-3px;width:2px;background:#ffd70088"></span>
+      </span><b style="color:${col}">${g}%</b>`;
+  }else{
+    $("hearts").textContent="";
+  }
   $("scoreBox").textContent=yen(G.money);
   $("modeInfo").textContent=G.mode==="rhythm"?`リズム暗記【${G.fkey}】${G.diff.name}・${rhythmAnswerMode==="click"?"4択":"タイピング"}  ${G.ci+1}/${G.course.length}式`:"";
 }
@@ -1666,13 +1682,14 @@ function endGame(reason){
   G.running=false;cancelAnimationFrame(G.raf);
   if(reason==="quit"){gotoTitle();return;}
   if(reason==="quit_practice"&&G.slotsTotal===0){gotoTitle();return;}
-  if(reason==="dead")sfx.gameover();else sfx.fanfare();
+  const rhythmClear=G.mode==="rhythm"?Math.round(G.groove)>=80:true;
+  if(reason==="dead"||!rhythmClear)sfx.gameover();else sfx.fanfare();
   lastRun={mode:G.mode==="rhythm"?"rhythm":"practice",fkey:G.fkey||P.fkey,diff:G.diff,revenge:P.revenge,plist:P.list};
   const memPct=G.slotsTotal?Math.round(G.slotsFirstTry/G.slotsTotal*100):0;
   const title=titleFor(G.money);
   if(G.money>best.money){best={money:G.money};sv.set("best",best);}
-  $("resTitle").textContent=reason==="dead"?"― 力尽きた… ―":G.mode==="rhythm"?"― コース クリア ―":"― 練習 終了 ―";
-  $("resTitle").style.color=reason==="dead"?"var(--ng)":"var(--gold)";
+  $("resTitle").textContent=G.mode==="rhythm"?(rhythmClear?"― COURSE CLEAR!! ―":"― 完走…クリアならず(ゲージ80%必要) ―"):"― 練習 終了 ―";
+  $("resTitle").style.color=(G.mode==="rhythm"&&!rhythmClear)?"var(--ng)":"var(--gold)";
   $("resRank").textContent=`称号「${title}」`;
   const nt=nextTitle(G.money);
   $("resMoney").textContent=yen(G.money);
@@ -1681,7 +1698,7 @@ function endGame(reason){
     <div>正答スロット <b>${G.slotsFirstTry}</b> / ${G.slotsTotal}</div>
     <div>最大コンボ <b>${G.maxCombo}</b></div>
     <div>JUST判定 <b>${G.justs}</b></div>
-    <div>タイプ正確率 <b>${accuracy()}%</b></div>`;
+    ${G.mode==="rhythm"?`<div>最終ゲージ <b>${Math.round(G.groove)}%</b></div>`:`<div>タイプ正確率 <b>${accuracy()}%</b></div>`}`;
   $("memRate").innerHTML=`式構造の暗記率: <b>${memPct}%</b> ${memPct>=90?"— 完璧!本試験で立式即答レベル":memPct>=70?"— 良好。あと一息":memPct>=50?"— 復讐の地下室で固めよう":"— まだ構造が入っていない…練習モードへ"}`;
   const misses=(G.missList||[]).slice(0,8);
   $("resMiss").innerHTML=misses.length?
