@@ -1,0 +1,1727 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>立式バスター2 〜FP1級 式構造タイピング〜</title>
+<style>
+:root{
+  --bg:#070d1a; --panel:#0e1930; --panel2:#152344; --line:#22355f;
+  --tx:#dce7ff; --sub:#8ba3d4; --cyan:#39d8ff; --amber:#ffc23d; --mag:#ff5fa8;
+  --ok:#4dff9e; --ng:#ff4d6a; --gold:#ffd700;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--tx);font-family:"Yu Gothic UI","Meiryo",system-ui,sans-serif;user-select:none;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#app{position:relative;width:100vw;height:100vh;overflow:hidden;
+  background:
+   radial-gradient(1200px 500px at 50% -100px, #12244d55, transparent),
+   repeating-linear-gradient(0deg, transparent 0 39px, #12203f44 39px 40px),
+   repeating-linear-gradient(90deg, transparent 0 39px, #12203f44 39px 40px),
+   var(--bg);}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.screen.on{display:flex}
+/* ---------- タイトル・メニュー ---------- */
+#logo{font-size:60px;font-weight:900;letter-spacing:6px;
+  background:linear-gradient(180deg,#7fe7ff,#2da8ff 55%,#0a5cff);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 18px #2da8ff88);}
+#logoSub{color:var(--sub);letter-spacing:8px;margin-top:6px;font-size:15px}
+#verTag{margin-top:10px;font-size:12px;letter-spacing:3px;color:#5f7bb0}
+.menu{margin-top:30px;display:flex;flex-direction:column;gap:8px;min-width:460px;max-width:640px}
+.mi{padding:12px 22px;border:1px solid var(--line);border-radius:10px;background:#0e193088;font-size:17px;
+  display:flex;justify-content:space-between;align-items:center;transition:.12s;cursor:pointer}
+.mi small{color:var(--sub);font-size:12px;margin-left:16px;text-align:right}
+.mi.sel{border-color:var(--cyan);background:#10335e;box-shadow:0 0 14px #39d8ff44;transform:translateX(6px)}
+.mi.sel::before{content:"▶ ";color:var(--cyan)}
+.hintbar{position:absolute;bottom:14px;color:var(--sub);font-size:13px;letter-spacing:1px}
+.imewarn{margin-top:22px;color:var(--amber);font-size:13px;border:1px dashed #ffc23d55;padding:6px 14px;border-radius:8px}
+.bestline{margin-top:12px;color:var(--gold);font-size:14px}
+.selTitle{font-size:28px;font-weight:800;margin-bottom:20px;letter-spacing:4px}
+.selTitle span{color:var(--cyan)}
+#listMenu{max-height:62vh;overflow:auto;min-width:660px}
+.dj{padding:8px 16px;border:1px solid var(--line);border-radius:8px;margin:4px 0;font-size:14.5px;
+  display:flex;justify-content:space-between;background:#0e193088;cursor:pointer}
+.dj.sel{border-color:var(--cyan);background:#10335e}
+.dj.sel::before{content:"▶ ";color:var(--cyan)}
+.dj small{color:var(--sub)}
+.fieldTag{display:inline-block;min-width:20px;height:20px;line-height:20px;text-align:center;border-radius:5px;
+  font-size:12px;font-weight:800;margin-right:8px;padding:0 3px}
+.fA{background:#1b4d3e;color:#7dffce}.fC{background:#153a5e;color:#7fd0ff}.fD{background:#4d3b12;color:#ffd97d}
+.fE{background:#3d1b4d;color:#df9dff}.fF{background:#4d1b28;color:#ff9db4}
+/* ---------- 数式表示(共通) ---------- */
+.formula{font-size:24px;line-height:1.7;display:inline-block}
+.formula .op{margin:0 7px;color:#b7ccf5}
+.formula .fx{color:#8ba3d4}
+.formula .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 5px}
+.formula .frac>.num{padding:1px 10px;border-bottom:2px solid #b7ccf5}
+.formula .frac>.den{padding:1px 10px}
+.formula .frac .frac{font-size:.82em}
+.formula .slot{display:inline-block;min-width:56px;text-align:center;border-radius:8px;padding:1px 10px;margin:1px 2px;
+  border:1.5px dashed #44598a;color:#7d94c4;font-weight:800}
+.formula .slot.active{border-color:var(--cyan);color:var(--cyan);border-style:solid;
+  box-shadow:0 0 12px #39d8ff44;animation:blink 1s infinite}
+.formula .slot.done{border-style:solid;border-color:#1f7a4d;color:var(--ok);background:#0f2b1d}
+.formula .slot.miss{border-style:solid;border-color:var(--ng);color:var(--ng);background:#2b0f16}
+@keyframes blink{50%{opacity:.5}}
+/* ---------- リズムゲーム画面 ---------- */
+#game{display:none;position:absolute;inset:0}
+#game.on{display:block}
+#hud{position:absolute;top:0;left:0;right:0;height:48px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 18px;background:linear-gradient(180deg,#0a142bee,#0a142b00);z-index:30;font-size:15px}
+#hearts{letter-spacing:3px;font-size:18px}
+#modeInfo{color:var(--sub)}
+#scoreBox{font-size:20px;font-weight:800;color:var(--gold);text-shadow:0 0 8px #ffd70055}
+#odaiBox{position:absolute;top:52px;left:0;right:0;text-align:center;z-index:25;padding:6px 20px;pointer-events:none}
+#odaiName{font-size:16px;font-weight:800;color:var(--amber);letter-spacing:2px;margin-bottom:4px}
+#odaiFormula{min-height:70px}
+#lanes{position:absolute;top:200px;left:0;right:0;bottom:150px;overflow:hidden}
+#judgeLine{position:absolute;left:6%;right:6%;bottom:148px;height:3px;z-index:6;border-radius:2px;
+  background:linear-gradient(90deg,transparent,#39d8ff,#7fe7ff,#39d8ff,transparent);box-shadow:0 0 14px #39d8ff88}
+.note{position:absolute;z-index:10;min-width:70px;text-align:center;padding:9px 14px;border-radius:12px;
+  background:#16264aee;border:2px solid #3a5a9a;font-weight:900;font-size:24px;color:#cfe0ff;
+  box-shadow:0 0 12px #2a4a8a66,0 4px 14px #0009}
+.note .lbl{font-size:10px;letter-spacing:2px;font-weight:700;color:var(--sub)}
+.note.active{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 22px #39d8ff88,0 4px 14px #0009}
+/* ---------- 入力パネル(リズム) ---------- */
+#panel{position:absolute;left:0;right:0;bottom:0;height:146px;background:linear-gradient(180deg,#0c1836f2,#091228fa);
+  border-top:1px solid var(--line);z-index:20;padding:12px 26px;display:flex;flex-direction:column;gap:6px}
+#pAsk{font-size:15px;color:var(--sub)}
+#pAsk b{color:var(--cyan)}
+#pInput{font-family:Consolas,Menlo,monospace;font-size:27px;letter-spacing:1px;min-height:40px}
+#pInput .done{color:var(--ok)} #pInput .cursor{color:var(--cyan);animation:blink .6s infinite}
+#pInput .hintkana{color:var(--amber);font-size:19px;margin-left:14px}
+#pMeta{display:flex;justify-content:space-between;color:var(--sub);font-size:12.5px}
+#combo{position:absolute;right:26px;top:210px;z-index:28;text-align:right;pointer-events:none}
+#comboN{font-size:44px;font-weight:900;color:var(--amber);text-shadow:0 0 16px #ffc23d66;display:none}
+#comboL{font-size:12px;color:var(--sub);letter-spacing:2px;display:none}
+#judgePop{position:absolute;left:0;right:0;bottom:190px;text-align:center;z-index:29;font-size:26px;font-weight:900;
+  letter-spacing:4px;pointer-events:none;opacity:0}
+#judgePop.show{animation:jpop .5s}
+@keyframes jpop{0%{opacity:0;transform:scale(.6)}30%{opacity:1;transform:scale(1.15)}100%{opacity:0;transform:scale(1)}}
+/* ---------- 練習画面 ---------- */
+#practice{display:none;position:absolute;inset:0}
+#practice.on{display:block}
+#prHud{position:absolute;top:0;left:0;right:0;height:48px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 18px;z-index:30;font-size:14px;color:var(--sub);background:linear-gradient(180deg,#0a142bee,#0a142b00)}
+#prCard{position:absolute;top:11%;left:50%;transform:translateX(-50%);width:min(940px,94vw);
+  background:#0e1930ee;border:1px solid var(--line);border-radius:16px;padding:26px 36px;z-index:10;
+  box-shadow:0 10px 50px #000a}
+#prName{font-size:19px;font-weight:800;color:var(--amber);letter-spacing:1px;margin-bottom:14px}
+#prFormula{text-align:center;margin:10px 0 18px;min-height:80px}
+#prAnswer{min-height:120px}
+#prTypeBox{font-family:Consolas,Menlo,monospace;font-size:26px;min-height:40px}
+#prTypeBox .done{color:var(--ok)} #prTypeBox .cursor{color:var(--cyan);animation:blink .6s infinite}
+#prTypeBox .hintkana{color:var(--amber);font-size:19px;margin-left:12px}
+#choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.choice{padding:13px 16px;border:1.5px solid var(--line);border-radius:10px;background:#0c1730;font-size:16.5px;
+  font-weight:700;cursor:pointer;transition:.1s;display:flex;align-items:center;gap:10px}
+.choice:hover{border-color:#3a5a9a;background:#122142}
+.choice .kn{color:var(--sub);font-size:12px;border:1px solid var(--line);border-radius:4px;padding:0 6px}
+.choice.ok{border-color:var(--ok);color:var(--ok);background:#0f2b1d;box-shadow:0 0 12px #4dff9e44}
+.choice.ng{border-color:var(--ng);color:var(--ng);background:#2b0f16;animation:shk .3s}
+.choice.dim{opacity:.4}
+#prNote{margin-top:14px;padding:10px 14px;border-left:3px solid var(--amber);background:#152036;color:#e8d9a8;
+  font-size:14.5px;display:none;line-height:1.6}
+#prFoot{display:flex;justify-content:space-between;align-items:center;margin-top:16px;color:var(--sub);font-size:13px}
+#prModeBtn{border:1px solid var(--line);border-radius:8px;padding:5px 14px;cursor:pointer;background:#0c1730;color:var(--tx);font-size:13px}
+#prModeBtn:hover{border-color:var(--cyan)}
+#prProg{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);width:min(640px,80vw);z-index:10}
+#prProgBar{height:8px;border:1px solid var(--line);border-radius:5px;overflow:hidden;background:#0c1730}
+#prProgFill{height:100%;width:0%;background:linear-gradient(90deg,#39d8ff,#7fe7ff);transition:width .3s}
+#prProgTxt{text-align:center;color:var(--sub);font-size:12px;margin-top:5px}
+/* リズム用4択・ボタン類 */
+#pChoices{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:2px}
+@media(min-width:1100px){#pChoices{grid-template-columns:repeat(4,1fr)}}
+#pChoices .choice{padding:14px 12px;font-size:16px;justify-content:center;text-align:center}
+.rbtn{border:1.5px solid var(--line);border-radius:10px;padding:11px 22px;cursor:pointer;background:#0c1730;
+  color:var(--tx);font-size:15px;font-weight:700}
+.rbtn:hover{border-color:var(--cyan);background:#10335e}
+#resBtns{display:flex;gap:12px;justify-content:center;margin-top:18px}
+.quitBtn{border:1px solid var(--line);border-radius:8px;padding:3px 12px;cursor:pointer;background:#0c1730;
+  color:var(--sub);font-size:13px}
+.quitBtn:hover{border-color:var(--ng);color:var(--ng)}
+/* ---------- エフェクト ---------- */
+.particle{position:absolute;width:7px;height:7px;border-radius:2px;z-index:35;pointer-events:none}
+.reward{position:absolute;z-index:36;font-weight:900;color:var(--gold);text-shadow:0 0 8px #ffd70088;
+  animation:rise 1s forwards;pointer-events:none;font-size:19px}
+@keyframes rise{0%{opacity:0;transform:translateY(8px)}25%{opacity:1}100%{opacity:0;transform:translateY(-46px)}}
+#shake.shaking{animation:shk .3s}
+@keyframes shk{0%,100%{transform:translate(0,0)}20%{transform:translate(-9px,5px)}40%{transform:translate(8px,-6px)}60%{transform:translate(-6px,3px)}80%{transform:translate(4px,-2px)}}
+#vignette{position:absolute;inset:0;pointer-events:none;z-index:40;opacity:0;transition:opacity .1s;
+  background:radial-gradient(ellipse at center,transparent 55%,rgba(255,0,40,.5) 100%)}
+#bigMsg{position:absolute;left:0;right:0;top:34%;text-align:center;z-index:45;font-size:48px;font-weight:900;
+  letter-spacing:8px;pointer-events:none;opacity:0;text-shadow:0 0 30px currentColor}
+#bigMsg.show{animation:bigpop 1.2s forwards}
+@keyframes bigpop{0%{opacity:0;transform:scale(.5)}15%{opacity:1;transform:scale(1.12)}30%{transform:scale(1)}80%{opacity:1}100%{opacity:0}}
+/* ---------- リザルト ---------- */
+#resCard{background:#0e1930ee;border:1px solid var(--line);border-radius:16px;padding:28px 44px;min-width:580px;max-width:820px;
+  box-shadow:0 10px 50px #000a}
+#resTitle{font-size:25px;font-weight:900;letter-spacing:4px;text-align:center;margin-bottom:4px}
+#resRank{text-align:center;font-size:19px;color:var(--gold);font-weight:800;margin-bottom:10px;text-shadow:0 0 12px #ffd70055}
+#resMoney{text-align:center;font-size:42px;font-weight:900;color:var(--gold);margin:4px 0 2px}
+#resSub{text-align:center;color:var(--sub);font-size:14px;margin-bottom:12px}
+.resGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px 30px;font-size:15px;margin:12px 0}
+.resGrid b{color:var(--cyan)}
+#memRate{text-align:center;margin-top:8px;padding:9px;border:1px dashed #ffc23d66;border-radius:9px;font-size:15px}
+#memRate b{color:var(--amber);font-size:21px}
+#resMiss{margin-top:10px;font-size:13px;color:var(--sub);max-height:150px;overflow:auto}
+#resMiss .mi2{color:var(--ng);margin:2px 0}
+/* 遊び方 */
+#howto{max-width:840px;line-height:1.85;font-size:15px}
+#howto h3{color:var(--cyan);margin:13px 0 4px;letter-spacing:2px}
+#howto kbd{background:#152344;border:1px solid var(--line);border-radius:5px;padding:1px 8px;font-family:Consolas,monospace}
+</style>
+</head>
+<body>
+<div id="app"><div id="shake" style="position:absolute;inset:0">
+
+<!-- タイトル -->
+<div class="screen on" id="scrTitle">
+  <div id="logo">立式バスター２</div>
+  <div id="logoSub">FP1級 式の構造を暗記するタイピング</div>
+  <div id="verTag">v2.1 (2026-08-01)</div>
+  <div class="menu" id="titleMenu"></div>
+  <div class="bestline" id="bestline"></div>
+  <div class="imewarn">⚠ 日本語入力(IME)を<b>OFF</b>(半角英数)にしてプレイしてください</div>
+  <div class="hintbar">↑↓:選択　Enter:決定(クリックでも可)　M:サウンド　Esc:戻る</div>
+</div>
+
+<!-- 分野選択 -->
+<div class="screen" id="scrField">
+  <div class="selTitle" id="fieldTitle">分野を<span>選択</span></div>
+  <div class="menu" id="fieldMenu"></div>
+  <div class="hintbar">↑↓:選択　Enter:決定　Esc:戻る</div>
+</div>
+
+<!-- 難易度選択 -->
+<div class="screen" id="scrDiff">
+  <div class="selTitle">難易度を<span>選択</span></div>
+  <div class="menu" id="diffMenu"></div>
+  <div class="hintbar">↑↓:選択　Enter:決定　Esc:戻る　※長い用語のノーツは自動でゆっくり降ります</div>
+</div>
+
+<!-- 回答方式選択(リズム) -->
+<div class="screen" id="scrAns">
+  <div class="selTitle">回答方式を<span>選択</span></div>
+  <div class="menu" id="ansMenu"></div>
+  <div class="hintbar">↑↓:選択　Enter:決定　Esc:戻る</div>
+</div>
+
+<!-- 式リスト選択(練習) -->
+<div class="screen" id="scrList">
+  <div class="selTitle" id="listTitle">式を<span>選択</span></div>
+  <div class="menu" id="listMenu"></div>
+  <div class="hintbar">↑↓:選択　Enter:決定　Esc:戻る</div>
+</div>
+
+<!-- 遊び方 -->
+<div class="screen" id="scrHow">
+  <div id="howto">
+    <div class="selTitle">遊び<span>方</span></div>
+    <h3>■ このゲームで覚えるもの</h3>
+    数値ではなく<b>式の構造</b>。「自己資本＝純資産−新株予約権−非支配株主持分」のように、
+    <b>どの項目を・どの順で・何で割るか</b>を体に叩き込みます。
+    <h3>■ リズム暗記(ビートマニア風)</h3>
+    画面上部にお題「自己資本＝<span style="color:var(--cyan)">？−？−？</span>」が出て、空欄①②③…のノーツが順に降ってきます。
+    空欄に入る項目を<b>思い出してローマ字で打つ</b>とノーツが弾け、音階が鳴ります。式が完成するとコードが鳴り、次の式へ。
+    判定ラインを過ぎるとミス(❤−1)で正解が表示されます。ラインの近くで打つと「JUST!」ボーナス。
+    <h3>■ 練習(タイピング/4択クリック)</h3>
+    落ちてこない静止画面でじっくり。<kbd>F2</kbd>またはボタンで「タイピング回答」⇔「4択クリック回答」を切替できます。
+    4択は<kbd>1</kbd>〜<kbd>4</kbd>キーでも回答可能。全空欄を埋めると式の解説が表示されます。
+    <h3>■ リズム暗記の回答方式</h3>
+    リズム暗記は<b>タイピング回答</b>と<b>4択タップ回答</b>を選べます。4択はマウス/タッチ(iPad)/1〜4キーで回答。
+    誤答をタップすると即ミスなので、当てずっぽうは通用しません。選択肢は同じ分野の用語だけが出ます。
+    <h3>■ 復讐の地下室</h3>
+    ミスした式が収監されます。3回完答で成仏(=記憶定着)。
+    <h3>■ キー操作</h3>
+    <kbd>Tab</kbd> ヒント(読みを1文字ずつ開示・獲得額↓)　<kbd>F2</kbd> 練習の回答方式切替　<kbd>M</kbd> サウンド　<kbd>Esc</kbd> 中断
+    <div class="hintbar">Esc:戻る</div>
+  </div>
+</div>
+
+<!-- リズムゲーム -->
+<div id="game">
+  <div id="hud">
+    <div style="display:flex;gap:22px;align-items:center"><span id="hearts"></span><span id="modeInfo"></span></div>
+    <div style="display:flex;gap:16px;align-items:center"><span id="scoreBox">¥0</span><button class="quitBtn" id="quitBtn">✕ 終了</button></div>
+  </div>
+  <div id="odaiBox"><div id="odaiName"></div><div id="odaiFormula" class="formula"></div></div>
+  <div id="lanes"></div>
+  <div id="judgeLine"></div>
+  <div id="judgePop"></div>
+  <div id="combo"><div id="comboN"></div><div id="comboL">COMBO</div></div>
+  <div id="panel">
+    <div id="pAsk"></div>
+    <div id="pInput"></div>
+    <div id="pChoices"></div>
+    <div id="pMeta"><span id="pHint">Tab:ヒント(獲得額↓)</span><span id="pKeys"></span></div>
+  </div>
+</div>
+
+<!-- 練習 -->
+<div id="practice">
+  <div id="prHud">
+    <span id="prMode"></span><span style="display:flex;gap:14px;align-items:center"><span id="prScore" style="color:var(--gold);font-weight:800"></span><button class="quitBtn" id="prQuitBtn">✕ 終了</button></span>
+  </div>
+  <div id="prCard">
+    <div id="prName"></div>
+    <div style="text-align:center"><div id="prFormula" class="formula"></div></div>
+    <div id="prAnswer">
+      <div id="prAsk" style="color:var(--sub);font-size:14px;margin-bottom:6px"></div>
+      <div id="prTypeBox"></div>
+      <div id="choices"></div>
+    </div>
+    <div id="prNote"></div>
+    <div id="prFoot">
+      <span id="prFootMsg">Tab:ヒント</span>
+      <span style="display:flex;gap:10px">
+        <button class="rbtn" id="prNextBtn" style="display:none;padding:7px 20px;font-size:14px">▶ 次の式へ (Enter)</button>
+        <button id="prModeBtn">回答方式切替 (F2)</button>
+      </span>
+    </div>
+  </div>
+  <div id="prProg"><div id="prProgBar"><div id="prProgFill"></div></div><div id="prProgTxt"></div></div>
+</div>
+
+<!-- リザルト -->
+<div class="screen" id="scrResult">
+  <div id="resCard">
+    <div id="resTitle"></div>
+    <div id="resRank"></div>
+    <div id="resMoney"></div>
+    <div id="resSub"></div>
+    <div class="resGrid" id="resGrid"></div>
+    <div id="memRate"></div>
+    <div id="resMiss"></div>
+    <div id="resBtns">
+      <button class="rbtn" id="btnRetry">もう一回 (R)</button>
+      <button class="rbtn" id="btnRevenge">復讐の地下室 (V)</button>
+      <button class="rbtn" id="btnTitle">タイトルへ (Esc)</button>
+    </div>
+  </div>
+  <div class="hintbar">R:もう一回　V:復讐の地下室　Esc:タイトル</div>
+</div>
+
+<div id="vignette"></div>
+<div id="bigMsg"></div>
+</div></div>
+<script>
+// 用語読み仮名辞書(T用語88種+SEL語句系答え)
+// 値: ひらがな+ASCII混在文字列(数字・記号はそのまま打鍵)
+const READINGS = {
+"保険料納付済期間":"ほけんりょうのうふずみきかん",
+"全額免除期間":"ぜんがくめんじょきかん",
+"報酬比例部分":"ほうしゅうひれいぶぶん",
+"経過的加算額":"けいかてきかさんがく",
+"加給年金額":"かきゅうねんきんがく",
+"報酬比例部分(年額)":"ほうしゅうひれいぶぶん",
+"標準報酬月額":"ひょうじゅんほうしゅうげつがく",
+"標準賞与額(年額)":"ひょうじゅんしょうよがく",
+"中高齢寡婦加算":"ちゅうこうれいかふかさん",
+"報酬比例の額":"ほうしゅうひれいのがく",
+"配偶者加給年金額":"はいぐうしゃかきゅうねんきんがく",
+"総医療費":"そういりょうひ",
+"窓口負担額":"まどぐちふたんがく",
+"自己負担限度額":"じこふたんげんどがく",
+"給付金の月額":"きゅうふきんのげつがく",
+"遺族厚生年金の額(本来)":"いぞくこうせいねんきんのがく",
+"基本年金額":"きほんねんきんがく",
+"調整前の労災年金額":"ちょうせいまえのろうさいねんきんがく",
+"予想配当(1年後)":"よそうはいとう",
+"期待利子率":"きたいりしりつ",
+"期待成長率":"きたいせいちょうりつ",
+"長期国債利回り":"ちょうきこくさいりまわり",
+"株式益回り":"かぶしきえきまわり",
+"資産Aの構成比":"しさんえーのこうせいひ",
+"資産Aの期待収益率":"しさんえーのきたいしゅうえきりつ",
+"資産Bの構成比":"しさんびーのこうせいひ",
+"資産Bの期待収益率":"しさんびーのきたいしゅうえきりつ",
+"ファンドの収益率":"ふぁんどのしゅうえきりつ",
+"無リスク資産利子率":"むりすくしさんりしりつ",
+"標準偏差":"ひょうじゅんへんさ",
+"ベンチマークの収益率":"べんちまーくのしゅうえきりつ",
+"トラッキングエラー":"とらっきんぐえらー",
+"表面利率":"ひょうめんりりつ",
+"売却価格・償還価格":"ばいきゃくかかく",
+"購入価格":"こうにゅうかかく",
+"所有期間・残存期間":"しょゆうきかん",
+"売上高":"うりあげだか",
+"変動費":"へんどうひ",
+"固定費":"こていひ",
+"限界利益率":"げんかいりえきりつ",
+"損益分岐点売上高":"そんえきぶんきてんうりあげだか",
+"帳簿価額(取得価額)":"ちょうぼかがく",
+"償却率":"しょうきゃくりつ",
+"損金経理額":"そんきんけいりがく",
+"償却限度額":"しょうきゃくげんどがく",
+"支払医療費":"しはらいいりょうひ",
+"保険金等補填額":"ほけんきんとうほてんがく",
+"敷地面積":"しきちめんせき",
+"建蔽率":"けんぺいりつ",
+"容積率":"ようせきりつ",
+"譲渡価額":"じょうとかがく",
+"概算取得費":"がいさんしゅとくひ",
+"譲渡費用":"じょうとひよう",
+"特別控除額":"とくべつこうじょがく",
+"買換資産の取得価額":"かいかえしさんのしゅとくかがく",
+"買換取得価額":"かいかえしゅとくかがく",
+"有効敷地面積":"ゆうこうしきちめんせき",
+"相続税額":"そうぞくぜいがく",
+"譲渡資産の評価額":"じょうとしさんのひょうかがく",
+"課税価格の合計額":"かぜいかかくのごうけいがく",
+"譲渡収入":"じょうとしゅうにゅう",
+"取得費":"しゅとくひ",
+"取得費加算額":"しゅとくひかさんがく",
+"交換差金":"こうかんさきん",
+"取得資産の時価":"しゅとくしさんのじか",
+"遺産に係る基礎控除額":"いさんにかかるきそこうじょがく",
+"相続税の総額":"そうぞくぜいのそうがく",
+"配偶者の取得課税価格":"はいぐうしゃのしゅとくかぜいかかく",
+"贈与財産の価額":"ぞうよざいさんのかがく",
+"基礎控除額":"きそこうじょがく",
+"路線価":"ろせんか",
+"奥行価格補正率":"おくゆきかかくほせいりつ",
+"地積":"ちせき",
+"正面路線価":"しょうめんろせんか",
+"1㎡当たりの価額":"1へいべいあたりのかがく",
+"区分所有権の価額(適用前)":"くぶんしょゆうけんのかがく",
+"区分所有補正率":"くぶんしょゆうほせいりつ",
+"敷地利用権の価額(適用前)":"しきちりようけんのかがく",
+"宅地の相続税評価額":"たくちのそうぞくぜいひょうかがく",
+"減額金額":"げんがくきんがく",
+"特定居住用の減額金額":"とくていきょじゅうようのげんがくきんがく",
+"特定事業用の減額金額":"とくていじぎょうようのげんがくきんがく",
+"貸付事業用の減額金額":"かしつけじぎょうようのげんがくきんがく",
+"直前期の年配当":"ちょくぜんきのねんはいとう",
+"直前々期の年配当":"ちょくぜんぜんきのねんはいとう",
+"相続税評価額による純資産":"そうぞくぜいひょうかがくによるじゅんしさん",
+"帳簿価額による純資産":"ちょうぼかがくによるじゅんしさん",
+"1株当たりの年配当金額":"1かぶあたりのねんはいとうきんがく",
+// SEL語句系の答え
+"あり":"あり",
+"なし":"なし",
+"上回る":"うわまわる",
+"下回る":"したまわる",
+"高い方":"たかいほう",
+"低い方":"ひくいほう",
+"多い方":"おおいほう",
+"少ない方":"すくないほう",
+"制限なし(100%)":"せいげんなし",
+"指定どおり80%":"していどおり80",
+"(1−配当性向)":"1-はいとうせいこう",
+"配当性向":"はいとうせいこう",
+"(1+配当性向)":"1+はいとうせいこう",
+};
+
+
+</script>
+<script>
+"use strict";
+/* ============================================================
+   FP1級 主要計算式データ(式の構造暗記用)
+   part の種類:
+     {t:'用語'}                 … 用語スロット(空欄化・打鍵/クリック対象)
+     {c:'表示',k:'打鍵文字列'}  … 定数スロット(空欄化対象。kは打つ文字)
+     {o:'×'}                    … 演算子(表示のみ)
+     {x:'('}                    … 括弧・固定文字(表示のみ)
+     {frac:{num:[...],den:[...]}} … 分数(縦表示)
+   ============================================================ */
+const T=t=>({t}), O=o=>({o}), X=x=>({x});
+const C=(c,k)=>({c,k:k!==undefined?k:c.replace(/[,，%％円月年㎡倍万]/g,"")});
+const FR=(num,den)=>({frac:{num,den}});
+
+const FORMULAS=[
+// ============ C 金融・財務分析 ============
+{id:'C_jiko',field:'C',name:'自己資本',parts:[T('純資産'),O('−'),T('新株予約権'),O('−'),T('非支配株主持分')],
+ note:'株主に帰属しない部分(新株予約権・非支配株主持分)を純資産から除く'},
+{id:'C_roe',field:'C',name:'ROE(自己資本当期純利益率)',parts:[FR([T('当期純利益')],[T('自己資本')]),O('×'),C('100')],
+ note:'株主のお金(自己資本)でどれだけ稼いだか'},
+{id:'C_jigyorieki',field:'C',name:'事業利益',parts:[T('営業利益'),O('+'),T('受取利息・受取配当金')],
+ note:'本業の利益+金融収益。ROAとICRの分子'},
+{id:'C_roa',field:'C',name:'使用総資本事業利益率(ROA)',parts:[FR([T('事業利益')],[T('使用総資本')]),O('×'),C('100')],
+ note:'会社が使う全資本でどれだけ事業利益を生んだか'},
+{id:'C_uriagerieki',field:'C',name:'売上高営業利益率',parts:[FR([T('営業利益')],[T('売上高')]),O('×'),C('100')],note:'売上のうち本業の儲けの割合'},
+{id:'C_genkairieki',field:'C',name:'限界利益',parts:[T('売上高'),O('−'),T('変動費')],note:'売上から変動費だけを引いた利益'},
+{id:'C_genkairitsu',field:'C',name:'限界利益率',parts:[FR([T('限界利益')],[T('売上高')]),O('×'),C('100')],note:'売上1円あたり固定費回収に回せる割合'},
+{id:'C_bep',field:'C',name:'損益分岐点売上高',parts:[FR([T('固定費')],[T('限界利益率')])],
+ note:'固定費を限界利益率で割る。利益ゼロになる売上高'},
+{id:'C_bepritsu',field:'C',name:'損益分岐点比率',parts:[FR([T('損益分岐点売上高')],[T('実際の売上高')]),O('×'),C('100')],
+ note:'低いほど不況に強い。100%−安全余裕率'},
+{id:'C_anzen',field:'C',name:'安全余裕率',parts:[FR([T('実際の売上高'),O('−'),T('損益分岐点売上高')],[T('実際の売上高')]),O('×'),C('100')],
+ note:'売上があと何%落ちても赤字にならないか'},
+{id:'C_ryudo',field:'C',name:'流動比率',parts:[FR([T('流動資産')],[T('流動負債')]),O('×'),C('100')],note:'短期の支払能力。200%以上が理想'},
+{id:'C_toza',field:'C',name:'当座比率',parts:[FR([T('当座資産')],[T('流動負債')]),O('×'),C('100')],note:'棚卸資産を除いた厳しめの支払能力'},
+{id:'C_kotei',field:'C',name:'固定比率',parts:[FR([T('固定資産')],[T('自己資本')]),O('×'),C('100')],note:'固定資産を自己資本でどれだけ賄えているか(低いほど安全)'},
+{id:'C_koteichoki',field:'C',name:'固定長期適合率',parts:[FR([T('固定資産')],[T('自己資本'),O('+'),T('固定負債')]),O('×'),C('100')],
+ note:'分母は自己資本+固定負債。100%以下が必須ライン'},
+{id:'C_fusai',field:'C',name:'負債比率',parts:[FR([T('負債')],[T('自己資本')]),O('×'),C('100')],note:'他人資本と自前資本のバランス(低いほど安全)'},
+{id:'C_jikoshihonhiritsu',field:'C',name:'自己資本比率',parts:[FR([T('自己資本')],[T('総資本')]),O('×'),C('100')],note:'総資本に占める自前資本の割合(高いほど安全)'},
+{id:'C_icr',field:'C',name:'インタレスト・カバレッジ・レシオ',parts:[FR([T('事業利益')],[T('金融費用')])],
+ note:'利息支払能力(倍)。分子は事業利益=営業利益+受取利息・配当金'},
+{id:'C_haitoseiko',field:'C',name:'配当性向',parts:[FR([T('配当金総額')],[T('当期純利益')]),O('×'),C('100')],note:'利益のうち配当に回す割合'},
+{id:'C_sustain',field:'C',name:'サスティナブル成長率',parts:[T('ROE'),O('×'),X('('),C('1'),O('−'),T('配当性向'),X(')')],
+ note:'内部留保の再投資で伸ばせる成長率。ROE×内部留保率'},
+{id:'C_ddm',field:'C',name:'理論株価(定率成長配当割引モデル)',parts:[FR([T('予想配当')],[T('期待利子率'),O('−'),T('期待成長率')])],
+ note:'分母は「期待利子率−期待成長率」。引き算の順序に注意'},
+{id:'C_ekimawari',field:'C',name:'株式益回り',parts:[FR([T('1株当たり純利益')],[T('株価')]),O('×'),C('100')],note:'PERの逆数。株価に対する利益の割合'},
+{id:'C_yield',field:'C',name:'イールドスプレッド',parts:[T('長期国債利回り'),O('−'),T('株式益回り')],
+ note:'債券と株式の魅力度比較。大きいほど株式が割高'},
+{id:'C_per',field:'C',name:'PER(株価収益率)',parts:[FR([T('株価')],[T('1株当たり純利益')])],note:'利益の何倍まで買われているか(倍)'},
+{id:'C_pbr',field:'C',name:'PBR(株価純資産倍率)',parts:[FR([T('株価')],[T('1株当たり純資産')])],note:'解散価値の何倍か(倍)'},
+{id:'C_haitourimawari',field:'C',name:'配当利回り',parts:[FR([T('1株当たり配当金')],[T('株価')]),O('×'),C('100')],note:'株価に対する配当の割合'},
+{id:'C_sharpe',field:'C',name:'シャープレシオ',parts:[FR([T('ポートフォリオの収益率'),O('−'),T('無リスク資産利子率')],[T('標準偏差')])],
+ note:'リスク1単位あたりの超過リターン。分母は標準偏差'},
+{id:'C_ir',field:'C',name:'インフォメーションレシオ',parts:[FR([T('ポートフォリオの収益率'),O('−'),T('ベンチマークの収益率')],[T('トラッキングエラー')])],
+ note:'ベンチマーク比の超過リターン÷トラッキングエラー'},
+{id:'C_pfkitai',field:'C',name:'ポートフォリオの期待収益率',parts:[T('構成比'),O('×'),T('期待収益率'),X('の合計')],
+ note:'各資産の構成比×期待収益率を合算(加重平均)'},
+{id:'C_saishu',field:'C',name:'最終利回り',parts:[FR([T('表面利率'),O('+'),FR([T('額面(100円)'),O('−'),T('購入価格')],[T('残存期間')])],[T('購入価格')]),O('×'),C('100')],
+ note:'クーポン+年あたり償還差益を購入価格で割る'},
+{id:'C_shoyu',field:'C',name:'所有期間利回り',parts:[FR([T('表面利率'),O('+'),FR([T('売却価格'),O('−'),T('購入価格')],[T('所有期間')])],[T('購入価格')]),O('×'),C('100')],
+ note:'償還前に売る場合。差益の相手が売却価格になる'},
+
+// ============ A 年金・社会保険 ============
+{id:'A_hanei',field:'A',name:'老齢基礎年金の反映月数(全額免除)',parts:[T('保険料納付済月数'),O('+'),T('全額免除月数'),O('×'),C('1/2')],
+ note:'2009年4月以後の全額免除は1/2を月数に算入(3月以前は1/3)'},
+{id:'A_kiso',field:'A',name:'老齢基礎年金の年金額',parts:[C('847,300円'),O('×'),FR([T('反映月数')],[C('480')])],
+ note:'満額847,300円(2026年度)×反映月数/480'},
+{id:'A_hoshu',field:'A',name:'報酬比例部分(総報酬制導入後)',parts:[T('平均標準報酬額'),O('×'),FR([C('5.481')],[C('1,000')]),O('×'),T('導入後の被保険者期間月数')],
+ note:'導入前(2003年3月以前)は平均標準報酬月額×7.125/1000'},
+{id:'A_keika',field:'A',name:'経過的加算額',parts:[C('1,766円'),O('×'),T('被保険者期間月数'),O('−'),C('847,300円'),O('×'),FR([T('20歳以上60歳未満の月数')],[C('480')])],
+ note:'定額単価1,766円(2026年度)。後半は老齢基礎相当分の控除'},
+{id:'A_teishi',field:'A',name:'在職老齢年金の支給停止額(月額)',parts:[X('('),T('基本月額'),O('+'),T('総報酬月額相当額'),O('−'),C('65万円'),X(')'),O('×'),C('1/2')],
+ note:'支給停止調整額は65万円(2026年度)。超えた分の半分が停止'},
+{id:'A_sohoshu',field:'A',name:'総報酬月額相当額',parts:[T('標準報酬月額'),O('+'),FR([T('直近1年間の標準賞与額')],[C('12')])],
+ note:'月給+ボーナスの月割り'},
+{id:'A_kihongetsu',field:'A',name:'基本月額',parts:[FR([T('報酬比例部分の年額')],[C('12')])],
+ note:'加給年金・経過的加算を除いた報酬比例部分の月割り'},
+{id:'A_izoku',field:'A',name:'遺族厚生年金の額',parts:[T('報酬比例部分の額'),O('×'),C('3/4')],
+ note:'短期要件は300月みなしで計算した報酬比例の3/4'},
+{id:'A_chukorei',field:'A',name:'中高齢寡婦加算',parts:[T('老齢基礎年金の満額'),O('×'),C('3/4')],
+ note:'2026年度は635,500円(100円単位に端数処理)'},
+{id:'A_kuriage',field:'A',name:'繰上げ減額率',parts:[C('0.4%'),O('×'),T('繰上げ月数')],
+ note:'1962年4月2日以後生まれ。最大60月×0.4%=24%減'},
+{id:'A_kurisage',field:'A',name:'繰下げ増額率',parts:[C('0.7%'),O('×'),T('繰下げ月数')],
+ note:'最大120月×0.7%=84%増(75歳まで)'},
+{id:'A_konen',field:'A',name:'高年齢雇用継続基本給付金(最大率)',parts:[T('支給対象月の賃金'),O('×'),C('10%')],
+ note:'2025年4月から最大10%に縮小(賃金が61%以下に低下した場合)'},
+
+// ============ D タックス ============
+{id:'D_taishoku',field:'D',name:'退職所得',parts:[X('('),T('収入金額'),O('−'),T('退職所得控除額'),X(')'),O('×'),C('1/2')],
+ note:'特定役員(勤続5年以下の役員)は1/2を掛けない'},
+{id:'D_taikojo20over',field:'D',name:'退職所得控除額(勤続20年超)',parts:[C('800万円'),O('+'),C('70万円'),O('×'),X('('),T('勤続年数'),O('−'),C('20年'),X(')')],
+ note:'勤続年数の1年未満は切上げ'},
+{id:'D_taikojo20',field:'D',name:'退職所得控除額(勤続20年以下)',parts:[C('40万円'),O('×'),T('勤続年数')],
+ note:'最低80万円保障'},
+{id:'D_ichiji',field:'D',name:'一時所得',parts:[T('総収入金額'),O('−'),T('収入を得るために支出した金額'),O('−'),T('特別控除額(最高50万円)')],
+ note:'総所得へは更に1/2を掛けて算入する'},
+{id:'D_ichiji2',field:'D',name:'一時所得の総所得算入額',parts:[T('一時所得の金額'),O('×'),C('1/2')],
+ note:'1/2を掛けるのは総所得金額への算入時'},
+{id:'D_iryo',field:'D',name:'医療費控除額',parts:[T('支払医療費'),O('−'),T('保険金等の補填額'),O('−'),C('10万円')],
+ note:'総所得200万円未満は10万円でなく総所得×5%。最高200万円'},
+{id:'D_teiritsu',field:'D',name:'減価償却費(定率法)',parts:[T('期首未償却残高'),O('×'),T('償却率')],
+ note:'期首帳簿価額に償却率。事業年度中取得は月数按分'},
+{id:'D_yakuin',field:'D',name:'役員退職金の適正額(功績倍率方式)',parts:[T('最終報酬月額'),O('×'),T('勤続年数'),O('×'),T('功績倍率')],
+ note:'超える部分は損金不算入'},
+{id:'D_kyuyo',field:'D',name:'給与所得',parts:[T('収入金額'),O('−'),T('給与所得控除額')],
+ note:'給与所得控除の最低保障は65万円(令和7年分以後)'},
+{id:'D_koteki',field:'D',name:'公的年金等の雑所得',parts:[T('収入金額'),O('−'),T('公的年金等控除額')],
+ note:'控除額は年齢(65歳)と収入で変わる'},
+{id:'D_kosai',field:'D',name:'交際費の損金算入限度額(中小法人)',parts:[C('800万円'),X(' or '),T('接待飲食費'),O('×'),C('50%'),X(' の有利な方')],
+ note:'年800万円の定額控除限度か飲食費の50%を選択'},
+
+// ============ E 不動産 ============
+{id:'E_kenchiku',field:'E',name:'建築面積の最高限度',parts:[T('敷地面積'),O('×'),T('建蔽率')],
+ note:'角地+10%、防火地域内の耐火建築物+10%(指定80%なら100%)'},
+{id:'E_nobe',field:'E',name:'延べ面積の最高限度',parts:[T('敷地面積'),O('×'),T('容積率')],
+ note:'指定容積率と前面道路幅員による制限の低い方を使う'},
+{id:'E_zenmen_jukyo',field:'E',name:'前面道路幅員による容積率(住居系)',parts:[T('前面道路幅員'),O('×'),C('4/10')],
+ note:'幅員12m未満のとき。住居系以外は6/10'},
+{id:'E_zenmen_hoka',field:'E',name:'前面道路幅員による容積率(住居系以外)',parts:[T('前面道路幅員'),O('×'),C('6/10')],
+ note:'商業地域など。住居系は4/10'},
+{id:'E_joto',field:'E',name:'課税長期譲渡所得金額',parts:[T('譲渡価額'),O('−'),X('('),T('取得費'),O('+'),T('譲渡費用'),X(')'),O('−'),T('特別控除額')],
+ note:'居住用財産の特別控除は最高3,000万円'},
+{id:'E_gaisan',field:'E',name:'概算取得費',parts:[T('譲渡価額'),O('×'),C('5%')],
+ note:'取得費が不明のとき譲渡価額の5%'},
+{id:'E_choki_zei',field:'E',name:'長期譲渡所得の税率(一般)',parts:[X('所得税'),C('15%'),O('+'),X('住民税'),C('5%')],
+ note:'復興特別所得税を含めると所得税15.315%'},
+{id:'E_keigen',field:'E',name:'居住用財産の軽減税率(6,000万円以下の部分)',parts:[X('所得税'),C('10%'),O('+'),X('住民税'),C('4%')],
+ note:'所有期間10年超の居住用。6,000万円超の部分は15%・5%'},
+{id:'E_shutokuhika',field:'E',name:'取得費加算額',parts:[T('相続税額'),O('×'),FR([T('譲渡資産の相続税評価額')],[T('相続税の課税価格の合計額')])],
+ note:'相続開始から3年10か月以内の譲渡が要件'},
+{id:'E_noi',field:'E',name:'NOI利回り(純利回り)',parts:[FR([T('年間収入'),O('−'),T('諸経費')],[T('投資総額')]),O('×'),C('100')],
+ note:'表面利回りと違い経費を引いた実質ベース'},
+{id:'E_dscr',field:'E',name:'DSCR(借入金償還余裕率)',parts:[FR([T('元利金返済前の年間キャッシュフロー')],[T('年間元利返済額')])],
+ note:'1.0倍超でないと返済が回らない(倍)'},
+
+// ============ F 相続・事業承継 ============
+{id:'F_kiso',field:'F',name:'遺産に係る基礎控除額',parts:[C('3,000万円'),O('+'),C('600万円'),O('×'),T('法定相続人の数')],
+ note:'法定相続人の数には相続放棄した人も含める'},
+{id:'F_hoken',field:'F',name:'生命保険金の非課税限度額',parts:[C('500万円'),O('×'),T('法定相続人の数')],
+ note:'死亡退職金も同じ枠が別に使える'},
+{id:'F_kazeiisan',field:'F',name:'課税遺産総額',parts:[T('課税価格の合計額'),O('−'),T('遺産に係る基礎控除額')],
+ note:'これを法定相続分で按分して速算表に当てる'},
+{id:'F_anbun',field:'F',name:'各人の算出税額',parts:[T('相続税の総額'),O('×'),FR([T('各人の課税価格')],[T('課税価格の合計額')])],
+ note:'実際の取得割合で按分する'},
+{id:'F_niwari',field:'F',name:'相続税額の2割加算',parts:[T('算出税額'),O('×'),C('20%')],
+ note:'配偶者・一親等の血族(代襲相続人の孫含む)以外に適用'},
+{id:'F_jiyochi',field:'F',name:'自用地評価額(路線価方式)',parts:[T('路線価'),O('×'),T('奥行価格補正率'),O('×'),T('地積')],
+ note:'路線価は千円単位で表示されている'},
+{id:'F_shakuchi',field:'F',name:'借地権の評価額',parts:[T('自用地評価額'),O('×'),T('借地権割合')],
+ note:'路線価図のA(90%)〜G(30%)'},
+{id:'F_kashiya_tsuketachi',field:'F',name:'貸家建付地の評価額',parts:[T('自用地評価額'),O('×'),X('('),C('1'),O('−'),T('借地権割合'),O('×'),T('借家権割合'),O('×'),T('賃貸割合'),X(')')],
+ note:'借家権割合は全国一律30%'},
+{id:'F_kashiya',field:'F',name:'貸家の評価額',parts:[T('固定資産税評価額'),O('×'),X('('),C('1'),O('−'),T('借家権割合'),O('×'),T('賃貸割合'),X(')')],
+ note:'建物は固定資産税評価額ベース'},
+{id:'F_shokibo_kyoju',field:'F',name:'小規模宅地(特定居住用)の限度と減額割合',parts:[C('330㎡'),X('まで'),C('80%'),X('減額')],
+ note:'特定事業用は400㎡・80%、貸付事業用は200㎡・50%'},
+{id:'F_shokibo_jigyo',field:'F',name:'小規模宅地(特定事業用)の限度と減額割合',parts:[C('400㎡'),X('まで'),C('80%'),X('減額')],
+ note:'居住用330㎡と事業用400㎡は完全併用で最大730㎡'},
+{id:'F_shokibo_kashitsuke',field:'F',name:'小規模宅地(貸付事業用)の限度と減額割合',parts:[C('200㎡'),X('まで'),C('50%'),X('減額')],
+ note:'貸付事業用を使うと他と限度面積の調整計算が必要'},
+{id:'F_ruiji',field:'F',name:'類似業種比準価額',parts:[T('類似業種の株価'),O('×'),T('比準割合'),O('×'),T('斟酌率'),O('×'),FR([T('1株当たり資本金等の額')],[C('50円')])],
+ note:'斟酌率は大会社0.7・中会社0.6・小会社0.5(七六五)'},
+{id:'F_hijun',field:'F',name:'比準割合',parts:[FR([X('ⓑ/Ｂ'),O('+'),X('ⓒ/Ｃ'),O('+'),X('ⓓ/Ｄ')],[C('3')]),X('  (配当・利益・純資産)')],
+ note:'配当ⓑ・利益ⓒ・純資産ⓓを類似業種と比べて平均'},
+{id:'F_junshisan',field:'F',name:'1株当たりの純資産価額',parts:[FR([T('相続税評価額による純資産'),O('−'),T('評価差額'),O('×'),C('37%')],[T('発行済株式数')])],
+ note:'評価差額に対する法人税額等相当額37%を控除'},
+{id:'F_hyokasagaku',field:'F',name:'評価差額',parts:[T('相続税評価額による純資産'),O('−'),T('帳簿価額による純資産')],
+ note:'含み益に相当する部分'},
+{id:'F_haitokangen',field:'F',name:'配当還元価額',parts:[FR([T('年配当金額')],[C('10%')]),O('×'),FR([T('1株当たり資本金等の額')],[C('50円')])],
+ note:'同族株主以外が取得した株式の特例的評価'},
+{id:'F_nenhaito',field:'F',name:'年配当金額(配当還元方式)',parts:[FR([T('直前期の配当'),O('+'),T('直前々期の配当')],[C('2')]),O('÷'),T('1株50円換算の発行済株式数')],
+ note:'2年平均。2円50銭未満なら2円50銭とする'},
+{id:'F_seisan',field:'F',name:'相続時精算課税の贈与税額',parts:[X('('),T('贈与額'),O('−'),C('110万円'),O('−'),C('2,500万円'),X(')'),O('×'),C('20%')],
+ note:'年110万円の基礎控除(2024年〜)+特別控除2,500万円、超過分は一律20%'},
+{id:'F_rekinen',field:'F',name:'暦年課税の贈与税額',parts:[X('('),T('贈与額'),O('−'),C('110万円'),X(')'),O('×'),T('税率'),O('−'),T('控除額')],
+ note:'基礎控除110万円を引いてから速算表に当てる'},
+];
+
+// ---------- 用語の読み仮名(v2追加分) ----------
+Object.assign(READINGS,{
+"純資産":"じゅんしさん",
+"新株予約権":"しんかぶよやくけん",
+"非支配株主持分":"ひしはいかぶぬしもちぶん",
+"当期純利益":"とうきじゅんりえき",
+"自己資本":"じこしほん",
+"営業利益":"えいぎょうりえき",
+"受取利息・受取配当金":"うけとりりそく",
+"事業利益":"じぎょうりえき",
+"使用総資本":"しようそうしほん",
+"限界利益":"げんかいりえき",
+"実際の売上高":"じっさいのうりあげだか",
+"流動資産":"りゅうどうしさん",
+"流動負債":"りゅうどうふさい",
+"当座資産":"とうざしさん",
+"固定資産":"こていしさん",
+"固定負債":"こていふさい",
+"負債":"ふさい",
+"総資本":"そうしほん",
+"金融費用":"きんゆうひよう",
+"配当金総額":"はいとうきんそうがく",
+"ROE":"ROE",
+"予想配当":"よそうはいとう",
+"1株当たり純利益":"1かぶあたりじゅんりえき",
+"1株当たり純資産":"1かぶあたりじゅんしさん",
+"1株当たり配当金":"1かぶあたりはいとうきん",
+"株価":"かぶか",
+"ポートフォリオの収益率":"ぽーとふぉりおのしゅうえきりつ",
+"構成比":"こうせいひ",
+"期待収益率":"きたいしゅうえきりつ",
+"額面(100円)":"がくめん",
+"残存期間":"ざんぞんきかん",
+"売却価格":"ばいきゃくかかく",
+"所有期間":"しょゆうきかん",
+"保険料納付済月数":"ほけんりょうのうふずみげっすう",
+"全額免除月数":"ぜんがくめんじょげっすう",
+"反映月数":"はんえいげっすう",
+"平均標準報酬額":"へいきんひょうじゅんほうしゅうがく",
+"導入後の被保険者期間月数":"どうにゅうごのつきすう",
+"被保険者期間月数":"ひほけんしゃきかんげっすう",
+"20歳以上60歳未満の月数":"20さいいじょう60さいみまんのつきすう",
+"基本月額":"きほんげつがく",
+"総報酬月額相当額":"そうほうしゅうげつがくそうとうがく",
+"直近1年間の標準賞与額":"ひょうじゅんしょうよがく",
+"報酬比例部分の年額":"ほうしゅうひれいぶぶんのねんがく",
+"報酬比例部分の額":"ほうしゅうひれいぶぶんのがく",
+"老齢基礎年金の満額":"ろうれいきそねんきんのまんがく",
+"繰上げ月数":"くりあげげっすう",
+"繰下げ月数":"くりさげげっすう",
+"支給対象月の賃金":"しきゅうたいしょうづきのちんぎん",
+"収入金額":"しゅうにゅうきんがく",
+"退職所得控除額":"たいしょくしょとくこうじょがく",
+"勤続年数":"きんぞくねんすう",
+"総収入金額":"そうしゅうにゅうきんがく",
+"収入を得るために支出した金額":"ししゅつしたきんがく",
+"特別控除額(最高50万円)":"とくべつこうじょがく",
+"一時所得の金額":"いちじしょとくのきんがく",
+"保険金等の補填額":"ほけんきんとうのほてんがく",
+"期首未償却残高":"きしゅみしょうきゃくざんだか",
+"最終報酬月額":"さいしゅうほうしゅうげつがく",
+"功績倍率":"こうせきばいりつ",
+"給与所得控除額":"きゅうよしょとくこうじょがく",
+"公的年金等控除額":"こうてきねんきんとうこうじょがく",
+"接待飲食費":"せったいいんしょくひ",
+"前面道路幅員":"ぜんめんどうろふくいん",
+"相続税の課税価格の合計額":"かぜいかかくのごうけいがく",
+"譲渡資産の相続税評価額":"じょうとしさんのそうぞくぜいひょうかがく",
+"年間収入":"ねんかんしゅうにゅう",
+"諸経費":"しょけいひ",
+"投資総額":"とうしそうがく",
+"元利金返済前の年間キャッシュフロー":"きゃっしゅふろー",
+"年間元利返済額":"ねんかんがんりへんさいがく",
+"法定相続人の数":"ほうていそうぞくにんのかず",
+"自用地評価額":"じようちひょうかがく",
+"借地権割合":"しゃくちけんわりあい",
+"借家権割合":"しゃくやけんわりあい",
+"賃貸割合":"ちんたいわりあい",
+"固定資産税評価額":"こていしさんぜいひょうかがく",
+"類似業種の株価":"るいじぎょうしゅのかぶか",
+"比準割合":"ひじゅんわりあい",
+"斟酌率":"しんしゃくりつ",
+"1株当たり資本金等の額":"1かぶあたりしほんきんとうのがく",
+"評価差額":"ひょうかさがく",
+"発行済株式数":"はっこうずみかぶしきすう",
+"年配当金額":"ねんはいとうきんがく",
+"直前期の配当":"ちょくぜんきのはいとう",
+"直前々期の配当":"ちょくぜんぜんきのはいとう",
+"1株50円換算の発行済株式数":"50えんかんさんのかぶしきすう",
+"贈与額":"ぞうよがく",
+"税率":"ぜいりつ",
+"控除額":"こうじょがく",
+"課税価格の合計額":"かぜいかかくのごうけいがく",
+"各人の課税価格":"かくじんのかぜいかかく",
+"算出税額":"さんしゅつぜいがく",
+"相続税評価額による純資産":"そうぞくぜいひょうかがくによるじゅんしさん",
+"帳簿価額による純資産":"ちょうぼかがくによるじゅんしさん",
+});
+
+
+</script>
+<script>
+// ローマ字タイピングエンジン
+// かな+ASCII混在文字列 → 逐次キー判定(ヘボン式/訓令式/各種バリエーション対応)
+const KMAP = {
+"あ":["a"],"い":["i","yi"],"う":["u","wu","whu"],"え":["e"],"お":["o"],
+"か":["ka","ca"],"き":["ki"],"く":["ku","cu","qu"],"け":["ke"],"こ":["ko","co"],
+"さ":["sa"],"し":["shi","si","ci"],"す":["su"],"せ":["se","ce"],"そ":["so"],
+"た":["ta"],"ち":["chi","ti"],"つ":["tsu","tu"],"て":["te"],"と":["to"],
+"な":["na"],"に":["ni"],"ぬ":["nu"],"ね":["ne"],"の":["no"],
+"は":["ha"],"ひ":["hi"],"ふ":["fu","hu"],"へ":["he"],"ほ":["ho"],
+"ま":["ma"],"み":["mi"],"む":["mu"],"め":["me"],"も":["mo"],
+"や":["ya"],"ゆ":["yu"],"よ":["yo"],
+"ら":["ra"],"り":["ri"],"る":["ru"],"れ":["re"],"ろ":["ro"],
+"わ":["wa"],"を":["wo"],"ん":["nn","xn","n'"],
+"が":["ga"],"ぎ":["gi"],"ぐ":["gu"],"げ":["ge"],"ご":["go"],
+"ざ":["za"],"じ":["ji","zi"],"ず":["zu"],"ぜ":["ze"],"ぞ":["zo"],
+"だ":["da"],"ぢ":["di"],"づ":["du"],"で":["de"],"ど":["do"],
+"ば":["ba"],"び":["bi"],"ぶ":["bu"],"べ":["be"],"ぼ":["bo"],
+"ぱ":["pa"],"ぴ":["pi"],"ぷ":["pu"],"ぺ":["pe"],"ぽ":["po"],
+"ぁ":["xa","la"],"ぃ":["xi","li"],"ぅ":["xu","lu"],"ぇ":["xe","le"],"ぉ":["xo","lo"],
+"ゃ":["xya","lya"],"ゅ":["xyu","lyu"],"ょ":["xyo","lyo"],"っ":["xtu","ltu","xtsu","ltsu"],
+"ゔ":["vu"],"ー":["-"],
+// 拗音(2文字)
+"きゃ":["kya"],"きゅ":["kyu"],"きょ":["kyo"],
+"しゃ":["sha","sya"],"しゅ":["shu","syu"],"しょ":["sho","syo"],
+"ちゃ":["cha","tya","cya"],"ちゅ":["chu","tyu","cyu"],"ちょ":["cho","tyo","cyo"],
+"にゃ":["nya"],"にゅ":["nyu"],"にょ":["nyo"],
+"ひゃ":["hya"],"ひゅ":["hyu"],"ひょ":["hyo"],
+"みゃ":["mya"],"みゅ":["myu"],"みょ":["myo"],
+"りゃ":["rya"],"りゅ":["ryu"],"りょ":["ryo"],
+"ぎゃ":["gya"],"ぎゅ":["gyu"],"ぎょ":["gyo"],
+"じゃ":["ja","zya","jya"],"じゅ":["ju","zyu","jyu"],"じょ":["jo","zyo","jyo"],
+"びゃ":["bya"],"びゅ":["byu"],"びょ":["byo"],
+"ぴゃ":["pya"],"ぴゅ":["pyu"],"ぴょ":["pyo"],
+"ふぁ":["fa","fula","fuxa"],"ふぃ":["fi","fyi"],"ふぇ":["fe","fye"],"ふぉ":["fo"],
+"うぃ":["wi","whi"],"うぇ":["we","whe"],"うぉ":["who"],
+"てぃ":["thi","texi","teli"],"でぃ":["dhi","dexi","deli"],"とぅ":["twu"],"どぅ":["dwu"],
+"しぇ":["she","sye"],"ちぇ":["che","tye"],"じぇ":["je","zye"],
+"ヴ":["vu"],
+};
+const VOWELS = "aiueo";
+
+// かな文字列 → ユニット列(それぞれ候補romaji配列)
+function kanaUnits(kana){
+  // カタカナ→ひらがな
+  kana = kana.replace(/[ァ-ヶ]/g, c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+  const units=[];
+  let i=0;
+  while(i<kana.length){
+    const two=kana.slice(i,i+2), one=kana[i];
+    if(two.length===2 && KMAP[two]){ units.push({kana:two,alts:KMAP[two].slice()}); i+=2; continue; }
+    if(one==="っ"){
+      units.push({kana:one,alts:KMAP["っ"].slice(),sokuon:true}); i++; continue;
+    }
+    if(one==="ん"){
+      units.push({kana:one,alts:KMAP["ん"].slice(),hatsuon:true}); i++; continue;
+    }
+    if(KMAP[one]){ units.push({kana:one,alts:KMAP[one].slice()}); i++; continue; }
+    // ASCII・数字・記号はそのまま1文字1ユニット(小文字化して判定)
+    units.push({kana:one,alts:[one.toLowerCase()],literal:true}); i++;
+  }
+  // 促音: 次ユニットの子音重ねを候補に追加
+  for(let k=0;k<units.length;k++){
+    if(units[k].sokuon && k+1<units.length && !units[k+1].literal){
+      const firsts=new Set();
+      for(const a of units[k+1].alts){ const c=a[0]; if(!VOWELS.includes(c)&&c!=='n') firsts.add(c); }
+      units[k].alts = [...firsts, ...units[k].alts];
+    }
+    if(units[k].hatsuon){
+      // 単独n許容判定: 次ユニットの正規候補(先頭alt)が子音始まり(n,y,母音以外)なら "n" 1打でOK
+      const nxt=units[k+1];
+      let singleOk=false;
+      if(nxt && !nxt.literal){
+        const c=nxt.alts[0][0];
+        singleOk = !VOWELS.includes(c)&&c!=='n'&&c!=='y';
+      }
+      units[k].singleOk = singleOk;
+      if(singleOk) units[k].alts=["n",...units[k].alts];
+    }
+  }
+  return units;
+}
+
+// タイピング状態機械
+class Typer {
+  constructor(kanaTarget){
+    this.units = kanaUnits(kanaTarget);
+    this.ui = 0;        // 現ユニットindex
+    this.buf = "";      // 現ユニットへの入力途中文字
+    this.typedRoma = "";// 確定済みローマ字(表示用)
+    this.done = this.units.length===0;
+  }
+  // 表示用: 残りのローマ字ガイド(канonical=先頭候補)
+  guide(){
+    let g=this.buf?this._bestAlt().slice(this.buf.length):"";
+    for(let k=this.ui+(this.buf?1:0); k<this.units.length; k++){
+      g += this.units[k].alts[0];
+    }
+    return g;
+  }
+  _bestAlt(){
+    const u=this.units[this.ui];
+    const c=u.alts.filter(a=>a.startsWith(this.buf));
+    return c.length?c[0]:u.alts[0];
+  }
+  progressKana(){ // 打ち終えたかな部分
+    return this.units.slice(0,this.ui).map(u=>u.kana).join("");
+  }
+  restKana(){
+    return this.units.slice(this.ui).map(u=>u.kana).join("");
+  }
+  // key: 1文字。 return: 'ok' | 'ng' | 'done'
+  key(ch){
+    if(this.done) return 'done';
+    ch = ch.toLowerCase();
+    const u = this.units[this.ui];
+    const nb = this.buf + ch;
+    let cands = u.alts.filter(a=>a.startsWith(nb));
+    if(cands.length){
+      this.buf = nb;
+      if(cands.includes(nb)){
+        // ユニット完了 — ただし「n」単独は遅延確定(nnの可能性を待つ)
+        if(u.hatsuon && nb==="n"){
+          return 'ok'; // 確定保留: 次キーで nn 完成 or 子音フォワード
+        } else if(u.sokuon && nb.length===1){
+          // 促音を子音1文字で消化 → 次ユニットはその子音から始まる候補に限定した状態で開始
+          this.typedRoma+=nb; this.ui++; this.buf="";
+          const nxt=this.units[this.ui];
+          if(nxt){ nxt.alts=nxt.alts.filter(a=>a[0]===nb); }
+        } else {
+          this.typedRoma+=nb; this.ui++; this.buf="";
+        }
+        if(this.ui>=this.units.length){ this.done=true; return 'done'; }
+      }
+      return 'ok';
+    }
+    // 現ユニットで不成立 → 「ん」を n 1打で確定して次ユニットに ch を回すケース
+    if(u.hatsuon && this.buf==="n" && u.singleOk){
+      const nxt = this.units[this.ui+1];
+      if(nxt){
+        const nc = nxt.alts.filter(a=>a.startsWith(ch));
+        if(nc.length){
+          this.typedRoma+="n"; this.ui++; this.buf="";
+          return this.key(ch);
+        }
+      }
+    }
+    return 'ng';
+  }
+}
+
+
+</script>
+<script>
+"use strict";
+/* ============================================================
+   立式バスター2 — 式の構造暗記エンジン
+   リズム暗記(ビートマニア風) / 練習(タイピング・4択クリック) / 復讐の地下室
+   ============================================================ */
+
+// ---------- ユーティリティ ----------
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const yen=n=>"¥"+Math.round(n).toLocaleString("ja-JP");
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const CIRC="①②③④⑤⑥⑦⑧⑨⑩⑪⑫";
+const FIELD_NAMES={A:"年金・社会保険",C:"金融・財務分析",D:"タックス",E:"不動産",F:"相続・事業承継"};
+
+// ---------- 永続化 ----------
+const SAVE_PREFIX="rbuster2_";
+const sv={
+  get(k,d){try{const v=localStorage.getItem(SAVE_PREFIX+k);return v==null?d:JSON.parse(v);}catch(e){return d;}},
+  set(k,v){try{localStorage.setItem(SAVE_PREFIX+k,JSON.stringify(v));}catch(e){}}
+};
+let missDB=sv.get("missDB",{});     // formulaId -> {need,n,slots:{slotIdx:count},last}
+let best=sv.get("best",{money:0});
+let soundOn=sv.get("sound",true);
+let prAnswerMode=sv.get("prMode","type"); // 'type' | 'click'
+let rhythmAnswerMode=sv.get("rhythmMode","type"); // 'type' | 'click'
+
+// ---------- サウンド(WebAudio合成・音階系) ----------
+let AC=null;
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+  if(AC&&AC.state==="suspended")AC.resume(); return AC;}
+function tone(f,dur,{type="triangle",vol=.13,f2,delay=0,detune=0}={}){
+  const c=ac(); if(!c||!soundOn)return;
+  const t0=c.currentTime+delay;
+  const o=c.createOscillator(),g=c.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t0);if(detune)o.detune.value=detune;
+  if(f2)o.frequency.exponentialRampToValueAtTime(Math.max(f2,1),t0+dur);
+  g.gain.setValueAtTime(vol,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+  o.connect(g).connect(c.destination);o.start(t0);o.stop(t0+dur+.02);
+}
+function noiseBurst(dur=.25,vol=.2,delay=0,fc=2200){
+  const c=ac(); if(!c||!soundOn)return;
+  const t0=c.currentTime+delay;
+  const n=Math.floor(c.sampleRate*dur),b=c.createBuffer(1,n,c.sampleRate),d=b.getChannelData(0);
+  for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);
+  const s=c.createBufferSource();s.buffer=b;
+  const g=c.createGain();g.gain.setValueAtTime(vol,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+  const f=c.createBiquadFilter();f.type="lowpass";f.frequency.value=fc;
+  s.connect(f).connect(g).connect(c.destination);s.start(t0);
+}
+// ペンタトニック(Cメジャー)。スロット順に上がる
+const SCALE=[261.63,293.66,329.63,392.00,440.00,523.25,587.33,659.25,783.99,880.00,1046.5,1174.7];
+const sfx={
+  tick(){tone(1300,.025,{vol:.05,type:"square"});},
+  err(){tone(150,.09,{type:"sawtooth",vol:.13});},
+  note(i,just){const f=SCALE[clamp(i,0,SCALE.length-1)];
+    tone(f,.22,{vol:just?.2:.15});tone(f*2,.14,{vol:.06,delay:.01});
+    if(just)tone(f*1.5,.18,{vol:.1,delay:.03});
+    noiseBurst(.06,.05,0,5000);},
+  chord(){[0,4,7,12].forEach((st,i)=>tone(261.63*Math.pow(2,st/12),.5,{vol:.13,delay:i*.07}));
+    noiseBurst(.15,.08,0,6000);},
+  miss(){tone(196,.25,{type:"sawtooth",vol:.15});tone(185,.3,{type:"sawtooth",vol:.12,delay:.08});noiseBurst(.2,.15,0,900);},
+  select(){tone(700,.05,{vol:.08,type:"square"});},
+  decide(){tone(660,.07,{vol:.1});tone(990,.1,{vol:.1,delay:.06});},
+  hint(){tone(660,.08,{vol:.08});tone(520,.08,{vol:.08,delay:.07});},
+  clickOK(i){sfx.note(i,false);},
+  clickNG(){sfx.err();},
+  fanfare(){[[523,0],[659,.13],[784,.26],[1047,.39]].forEach(([f,d])=>tone(f,.34,{vol:.16,delay:d}));},
+  gameover(){[[440,0],[415,.25],[392,.5],[330,.75]].forEach(([f,d])=>tone(f,.32,{vol:.15,delay:d}));},
+  beat(n){ // メトロノーム: 4拍子で1拍目強
+    if(n%4===0)noiseBurst(.03,.05,0,3000); else noiseBurst(.02,.025,0,4500);},
+};
+
+// ---------- 式データアクセス ----------
+// スロット列挙(読み順: 通常→分数は分子→分母)
+function enumSlots(parts,out){
+  out=out||[];
+  for(const p of parts){
+    if(p.t)out.push({kind:'t',disp:p.t,target:READINGS[p.t]||null});
+    else if(p.c!==undefined)out.push({kind:'c',disp:p.c,target:p.k});
+    else if(p.frac){enumSlots(p.frac.num,out);enumSlots(p.frac.den,out);}
+  }
+  return out;
+}
+// 式レンダリング。slotStates[i] = 'pending'|'active'|'done'|'miss'
+function renderFormula(f,slotStates,opts){
+  opts=opts||{};
+  let idx=0;
+  const walk=parts=>parts.map(p=>{
+    if(p.o)return `<span class="op">${esc(p.o)}</span>`;
+    if(p.x!==undefined)return `<span class="fx">${esc(p.x)}</span>`;
+    if(p.frac)return `<span class="frac"><span class="num">${walk(p.frac.num)}</span><span class="den">${walk(p.frac.den)}</span></span>`;
+    // スロット
+    const i=idx++;
+    const st=slotStates?slotStates[i]:'pending';
+    const disp=p.t!==undefined?p.t:p.c;
+    if(st==='done')return `<span class="slot done">${esc(disp)}</span>`;
+    if(st==='miss')return `<span class="slot miss">${esc(disp)}</span>`;
+    if(st==='reveal')return `<span class="slot">${esc(disp)}</span>`;
+    return `<span class="slot${st==='active'?' active':''}">${CIRC[i]||('('+(i+1)+')')}</span>`;
+  }).join("");
+  const body=walk(f.parts);
+  return `<span style="font-weight:800">${esc(f.name)}</span><span class="op">＝</span>${body}`;
+}
+function fieldPool(fkey){
+  if(fkey==="ALL")return FORMULAS.slice();
+  if(fkey==="CE")return FORMULAS.filter(x=>"CE".includes(x.field));
+  return FORMULAS.filter(x=>x.field===fkey);
+}
+// 4択の誤答肢(リズム・練習共通):
+//  ・同分野・同種スロット限定 — 他分野の用語は絶対に出さない(「明らかに違う」肢の排除)
+//  ・紛らわしさ優先 — 正解と文字の重なりが多い用語(例: 当期純利益⇔営業利益、月額⇔年額)を優先して出す
+//  ・同じ式に登場する項目は「別の空欄の正解」になり得るので除外
+function simScore(a,b){
+  const A=new Set();for(let i=0;i<a.length-1;i++)A.add(a.slice(i,i+2));
+  let hit=0;for(let i=0;i<b.length-1;i++)if(A.has(b.slice(i,i+2)))hit++;
+  return hit/Math.max(1,Math.max(a.length,b.length)-1);
+}
+function distractors(f,slot,n){
+  const same=new Set(),otherC=new Set();
+  for(const g of FORMULAS){
+    for(const s of enumSlots(g.parts)){
+      if(s.kind!==slot.kind||s.disp===slot.disp)continue;
+      if(g.field===f.field)same.add(s.disp);
+      else if(slot.kind==='c')otherC.add(s.disp); // 定数(ただの数値)のみ他分野補完を許す
+    }
+  }
+  const inFormula=new Set(enumSlots(f.parts).map(s=>s.disp));
+  const cand=[...same].filter(x=>!inFormula.has(x));
+  // 類似度で降順ソート(同率はランダム)。上位から「紛らわしい2つ」+ランダム1つ
+  const ranked=shuffle(cand).map(x=>({x,s:simScore(slot.disp,x)})).sort((a,b)=>b.s-a.s).map(o=>o.x);
+  let out=[];
+  if(ranked.length>n){
+    out=ranked.slice(0,n-1);
+    const rest=ranked.slice(n-1);
+    out.push(rest[Math.floor(Math.random()*rest.length)]);
+  }else out=ranked.slice(0,n);
+  if(out.length<n&&slot.kind==='c'){
+    const extra=shuffle([...otherC].filter(x=>!inFormula.has(x)&&!out.includes(x)));
+    out=out.concat(extra.slice(0,n-out.length));
+  }
+  return shuffle(out);
+}
+
+// ---------- 称号 ----------
+const TITLES=[
+[0,"FP見習い"],[30000,"電卓の卵"],[60000,"3級の風"],[90000,"2級の壁越え"],[120000,"計算下働き"],
+[150000,"立式書生"],[180000,"係数使い"],[220000,"分数の職人"],[260000,"速算表の民"],[300000,"数値ソムリエ"],
+[350000,"立式マイスター"],[400000,"計算の鬼"],[460000,"免除期間の覇者"],[520000,"複利の魔術師"],[580000,"路線価の支配者"],
+[650000,"タックス閃光"],[720000,"応用編の悪魔"],[800000,"満点の予感"],[900000,"CFPゴッドハンド"],[1000000,"FP1級の神"]];
+function titleFor(m){let t=TITLES[0][1];for(const [th,n] of TITLES)if(m>=th)t=n;return t;}
+function nextTitle(m){for(const [th,n] of TITLES)if(m<th)return {need:th-m,name:n};return null;}
+
+// ---------- 画面管理 ----------
+const screens=["scrTitle","scrField","scrDiff","scrAns","scrList","scrHow","scrResult"];
+let scr="scrTitle";
+function show(id){
+  screens.forEach(s=>$(s).classList.toggle("on",s===id));
+  $("game").classList.toggle("on",id==="game");
+  $("practice").classList.toggle("on",id==="practice");
+  scr=id;
+}
+
+// ---------- メニュー ----------
+let menuIdx=0,menuItems=[],menuEl=null,menuOnPick=null,menuOnEsc=null;
+function setMenu(el,items,onPick,onEsc){
+  menuEl=el;menuItems=items;menuIdx=0;menuOnPick=onPick;menuOnEsc=onEsc;renderMenu();
+}
+function renderMenu(){
+  menuEl.innerHTML=menuItems.map((it,i)=>
+    `<div data-mi="${i}" class="${menuEl.id==='listMenu'?'dj':'mi'}${i===menuIdx?' sel':''}">${it.html}</div>`).join("");
+  const selEl=menuEl.children[menuIdx];
+  if(selEl)selEl.scrollIntoView({block:"nearest"});
+}
+function menuKey(e){
+  if(e.key==="ArrowDown"){menuIdx=(menuIdx+1)%menuItems.length;sfx.select();renderMenu();return true;}
+  if(e.key==="ArrowUp"){menuIdx=(menuIdx-1+menuItems.length)%menuItems.length;sfx.select();renderMenu();return true;}
+  if(e.key==="Enter"){sfx.decide();menuOnPick(menuItems[menuIdx],menuIdx);return true;}
+  if(e.key==="Escape"){if(menuOnEsc)menuOnEsc();return true;}
+  return false;
+}
+// メニューのマウス対応
+document.addEventListener("click",e=>{
+  const mi=e.target.closest("[data-mi]");
+  if(mi&&menuEl&&mi.parentNode===menuEl&&(scr==="scrTitle"||scr==="scrField"||scr==="scrDiff"||scr==="scrAns"||scr==="scrList")){
+    menuIdx=+mi.dataset.mi;renderMenu();sfx.decide();menuOnPick(menuItems[menuIdx],menuIdx);
+  }
+});
+
+// ---------- タイトル ----------
+function gotoTitle(){
+  show("scrTitle");
+  const missN=Object.keys(missDB).length;
+  $("bestline").textContent=best.money>0?`最高記録 ${yen(best.money)} — 称号「${titleFor(best.money)}」`:"";
+  setMenu($("titleMenu"),[
+    {id:"rhythm",html:`リズム暗記 <small>ノーツが降る・ビートマニア風</small>`},
+    {id:"practice",html:`練習 <small>静止画面でじっくり(タイピング/4択クリック)</small>`},
+    {id:"revenge",html:`復讐の地下室 <small>ミスした式のリベンジ (${missN}式収監中)</small>`},
+    {id:"how",html:`遊び方 <small>ルール・操作説明</small>`},
+  ],it=>{
+    if(it.id==="rhythm")gotoField("rhythm");
+    else if(it.id==="practice")gotoField("practice");
+    else if(it.id==="revenge")startRevenge();
+    else if(it.id==="how")show("scrHow");
+  },null);
+}
+// ---------- 分野選択 ----------
+function gotoField(mode){
+  show("scrField");
+  $("fieldTitle").innerHTML=(mode==="rhythm"?"リズム暗記 — 分野を":"練習 — 分野を")+"<span>選択</span>";
+  const cnt=f=>fieldPool(f).length;
+  const items=[
+    {f:"ALL",html:`総合(全分野) <small>全${FORMULAS.length}式</small>`},
+    {f:"C",html:`C 金融・財務分析 ★ <small>${cnt("C")}式 — 比率式の宝庫</small>`},
+    {f:"E",html:`E 不動産 ★ <small>${cnt("E")}式</small>`},
+    {f:"CE",html:`C+E スペシャル <small>${cnt("CE")}式 — 重点強化</small>`},
+    {f:"A",html:`A 年金・社会保険 <small>${cnt("A")}式</small>`},
+    {f:"D",html:`D タックス <small>${cnt("D")}式</small>`},
+    {f:"F",html:`F 相続・事業承継 <small>${cnt("F")}式</small>`},
+  ];
+  setMenu($("fieldMenu"),items,it=>{
+    if(mode==="rhythm")gotoDiff(it.f);
+    else gotoList(it.f);
+  },gotoTitle);
+}
+// ---------- 難易度選択(リズム) ----------
+const DIFFS=[
+  {id:"slow",name:"ゆっくり",fall:15,gap:3.6,lenAdd:0.3,html:`ゆっくり <small>初見・じっくり想起(落下15秒+語長補正)</small>`},
+  {id:"normal",name:"ふつう",fall:11,gap:2.8,lenAdd:0.25,html:`ふつう <small>標準(落下11秒+語長補正)</small>`},
+  {id:"turbo",name:"ターボ",fall:7.5,gap:2.0,lenAdd:0.15,html:`ターボ <small>覚えた式の高速確認</small>`},
+];
+function gotoDiff(fkey){
+  show("scrDiff");
+  setMenu($("diffMenu"),DIFFS.map(d=>({d,html:d.html})),it=>gotoAns(fkey,it.d),()=>gotoField("rhythm"));
+}
+function gotoAns(fkey,diff){
+  show("scrAns");
+  const items=[
+    {m:"type",html:`タイピング回答 <small>想起してローマ字で打つ(記憶効果:最大)</small>`},
+    {m:"click",html:`4択タップ回答 <small>マウス/タッチ/1〜4キー。iPad向き。誤答タップは即ミス</small>`},
+  ];
+  if(rhythmAnswerMode==="click")items.reverse();
+  setMenu($("ansMenu"),items,it=>{
+    rhythmAnswerMode=it.m;sv.set("rhythmMode",rhythmAnswerMode);
+    startRhythm(fkey,diff);
+  },()=>gotoDiff(fkey));
+}
+// ---------- 式リスト(練習) ----------
+function gotoList(fkey){
+  show("scrList");
+  const pool=fieldPool(fkey);
+  const items=[
+    {mode:"seq",html:`▶ ぜんぶ順番に (${pool.length}式)`},
+    {mode:"shuf",html:`▶ シャッフルで全部`},
+    ...pool.map(f=>({mode:"one",f,html:`<span><span class="fieldTag f${f.field}">${f.field}</span>${esc(f.name)}</span><small>空欄${enumSlots(f.parts).length}</small>`}))
+  ];
+  setMenu($("listMenu"),items,it=>{
+    if(it.mode==="seq")startPractice(pool.slice(),fkey);
+    else if(it.mode==="shuf")startPractice(shuffle(pool),fkey);
+    else startPractice([it.f],fkey);
+  },()=>gotoField("practice"));
+}
+
+// ---------- 共有ゲーム状態 ----------
+const G={
+  running:false,mode:null,fkey:"ALL",diff:DIFFS[1],
+  hp:5,money:0,combo:0,maxCombo:0,
+  keysOK:0,keysNG:0,hits:0,justs:0,
+  slotsTotal:0,slotsFirstTry:0,
+  course:[],ci:0,           // 出題する式列と現在位置
+  slots:[],states:[],si:0,  // 現在式のスロット・状態・アクティブ位置
+  typer:null,hintLv:0,slotDirty:false, // slotDirty: この空欄でミスタイプ/ヒントあり
+  notes:[],noteTimer:0,spawned:0,
+  choices:[],lockClick:false,
+  beatT:0,beatN:0,
+  time:0,lastFrame:0,raf:0,
+  missList:[],formulaMissed:false,
+  transition:0,
+};
+function resetG(){
+  Object.assign(G,{hp:5,money:0,combo:0,maxCombo:0,keysOK:0,keysNG:0,hits:0,justs:0,
+    slotsTotal:0,slotsFirstTry:0,course:[],ci:0,slots:[],states:[],si:0,typer:null,hintLv:0,slotDirty:false,
+    notes:[],noteTimer:0,spawned:0,choices:[],lockClick:false,beatT:0,beatN:0,time:0,missList:[],formulaMissed:false,transition:0});
+  $("lanes").innerHTML="";
+}
+
+/* ============================================================
+   リズム暗記モード
+   ============================================================ */
+function startRhythm(fkey,diff){
+  resetG();
+  G.mode="rhythm";G.fkey=fkey;G.diff=diff;G.running=true;
+  const pool=shuffle(fieldPool(fkey));
+  G.course=pool.slice(0,8);
+  show("scrTitle");show("game");scr="game";
+  bigMsg("READY…","var(--cyan)");
+  setTimeout(()=>{if(G.running&&G.mode==="rhythm"){bigMsg("スタート!","var(--ok)");loadFormulaRhythm();}},900);
+  loop();
+}
+function loadFormulaRhythm(){
+  const f=G.course[G.ci];
+  if(!f){endGame("clear");return;}
+  G.slots=enumSlots(f.parts);
+  G.states=G.slots.map(()=>'pending');
+  G.si=0;G.notes.forEach(n=>n.el.remove());G.notes=[];G.spawned=0;G.noteTimer=0.4;
+  G.formulaMissed=false;
+  startSlot();
+  renderOdai();
+  updateHud();
+}
+function curF(){return G.course[G.ci];}
+function startSlot(){
+  if(G.si>=G.slots.length)return;
+  G.states[G.si]='active';
+  const s=G.slots[G.si];
+  G.typer=new Typer(s.target);
+  G.hintLv=0;G.slotDirty=false;G.lockClick=false;
+  if(rhythmAnswerMode==='click'){
+    const wrongs=distractors(curF(),s,3);
+    while(wrongs.length<3)wrongs.push(s.kind==='c'?'999':'その他');
+    G.choices=shuffle([{v:s.disp,ok:true},...wrongs.map(w=>({v:w,ok:false}))]);
+    renderAsk();renderChoicesR();
+  }else{
+    G.choices=[];$("pChoices").innerHTML="";
+    renderAsk();renderInput();
+  }
+}
+function renderChoicesR(){
+  $("pInput").innerHTML="";
+  $("pChoices").innerHTML=G.choices.map((c,i)=>
+    `<div class="choice" data-rci="${i}"><span class="kn">${i+1}</span>${esc(c.v)}</div>`).join("");
+  $("pHint").textContent="1〜4キーまたはタップで回答(誤答は即ミス)";
+  $("pKeys").textContent=`コンボ ${G.combo}`;
+}
+function renderOdai(){
+  const f=curF();if(!f)return;
+  $("odaiName").textContent=`【${f.field}分野】この式を完成させよ (${G.ci+1}/${G.course.length})`;
+  $("odaiFormula").innerHTML=renderFormula(f,G.states);
+}
+function renderAsk(){
+  const f=curF();const s=G.slots[G.si];
+  if(!s){$("pAsk").textContent="";return;}
+  $("pAsk").innerHTML=`空欄 <b>${CIRC[G.si]}</b> に入る${s.kind==='c'?'数値・定数':'項目'}は? <span style="color:#5f7bb0">(${esc(f.name)} の式)</span>`;
+}
+function renderInput(){
+  const t=G.typer;
+  if(!t){$("pInput").innerHTML="";return;}
+  const typed=t.typedRoma+t.buf;
+  let hintHtml="";
+  if(G.hintLv>0){
+    const k=G.slots[G.si].target;
+    const reveal=k.slice(0,Math.min(k.length,G.hintLv*2));
+    hintHtml=`<span class="hintkana">💡${esc(reveal)}${reveal.length<k.length?"…":""}</span>`;
+  }
+  $("pInput").innerHTML=`<span class="done">${esc(typed)}</span><span class="cursor">▍</span>${hintHtml}`;
+  $("pHint").textContent="Tab:ヒント(獲得額↓)";
+  $("pKeys").textContent=`正確率 ${accuracy()}%  コンボ ${G.combo}`;
+}
+function accuracy(){const t=G.keysOK+G.keysNG;return t?Math.round(G.keysOK/t*100):100;}
+// ノーツ
+function spawnNote(slotIdx){
+  const lanes=$("lanes");
+  const s=G.slots[slotIdx];
+  const el=document.createElement("div");
+  el.className="note";
+  el.innerHTML=`<div class="lbl">${s.kind==='c'?'定数':'項目'}</div>${CIRC[slotIdx]}`;
+  lanes.appendChild(el);
+  const W=lanes.clientWidth;
+  const lane=slotIdx%5;
+  const x=W*0.14+lane*(W*0.72/4)-el.offsetWidth/2;
+  const romaLen=(new Typer(s.target)).guide().length;
+  const fallDur=G.diff.fall+romaLen*G.diff.lenAdd;
+  const H=lanes.clientHeight;
+  const n={slotIdx,el,x,y:-70,vy:(H+140)/fallDur,graceLeft:0.7};
+  el.style.left=x+"px";el.style.top=n.y+"px";
+  G.notes.push(n);
+}
+function noteFor(slotIdx){return G.notes.find(n=>n.slotIdx===slotIdx);}
+// キー入力(リズム)
+function rhythmKey(e){
+  if(e.key==="Escape"){endGame("quit");return;}
+  if(rhythmAnswerMode==='click'){
+    if(/^[1-4]$/.test(e.key)&&!G.lockClick&&G.transition<=0){
+      const i=+e.key-1;
+      if(G.choices[i])answerChoiceR(i);
+    }
+    return;
+  }
+  if(e.key==="Tab"){e.preventDefault();sfx.hint();G.hintLv++;G.slotDirty=true;renderInput();return;}
+  if(e.ctrlKey||e.altKey||e.metaKey)return;
+  if(e.key.length!==1)return;
+  const ch=e.key.toLowerCase();
+  if(!/[a-z0-9\-+./%']/.test(ch))return;
+  ac();
+  if(!G.typer||G.transition>0)return;
+  const r=G.typer.key(ch);
+  if(r==="ng"){G.keysNG++;sfx.err();G.slotDirty=true;G.combo=0;updateCombo();flashNG($("pInput"));return;}
+  G.keysOK++;sfx.tick();
+  if(G.typer.done)hitSlot();
+  else renderInput();
+}
+function answerChoiceR(i){
+  const c=G.choices[i];
+  if(!c)return;
+  ac();
+  const btns=$("pChoices").querySelectorAll(".choice");
+  if(c.ok){
+    if(btns[i])btns[i].classList.add("ok");
+    hitSlot();
+  }else{
+    G.lockClick=true;
+    sfx.clickNG();
+    btns.forEach((b,k)=>{
+      if(k===i)b.classList.add("ng");
+      else if(G.choices[k].ok)b.classList.add("ok");
+      else b.classList.add("dim");
+    });
+    setTimeout(()=>{if(G.running&&!G.transition)missSlot("誤答! ");},750);
+  }
+}
+function hitSlot(){
+  const i=G.si,s=G.slots[i];
+  const n=noteFor(i);
+  const lanes=$("lanes");
+  const H=lanes.clientHeight;
+  // JUST判定: ノーツが下部30%まで来ていたら
+  const just=n?(n.y>H*0.62):false;
+  G.states[i]='done';
+  G.hits++;G.combo++;G.maxCombo=Math.max(G.maxCombo,G.combo);
+  if(just)G.justs++;
+  G.slotsTotal++;
+  if(!G.slotDirty)G.slotsFirstTry++;
+  const base=(5000+s.target.length*300)*(just?1.5:1)*(1+Math.min(G.combo,20)*0.04)*Math.pow(0.6,G.hintLv);
+  const got=Math.round(base/100)*100;
+  G.money+=got;
+  sfx.note(i,just);
+  updateCombo();
+  if(n){
+    explodeAt(n.el,just);
+    rewardPop(n.el,(just?"JUST! ":"")+"+"+yen(got));
+    n.el.remove();G.notes.splice(G.notes.indexOf(n),1);
+  }
+  if(just)judgePop("JUST!","var(--gold)");
+  G.si++;
+  renderOdai();updateHud();
+  if(G.si>=G.slots.length)formulaComplete();
+  else startSlot();
+}
+function missSlot(label){
+  const i=G.si,s=G.slots[i];
+  G.states[i]='miss';
+  G.slotsTotal++;
+  G.combo=0;updateCombo();
+  G.hp--;
+  G.formulaMissed=true;
+  sfx.miss();
+  judgePop((label||"MISS… ")+"正解: "+s.disp,"var(--ng)");
+  shake();
+  recordMiss(curF(),i);
+  const n=noteFor(i);
+  if(n){n.el.remove();G.notes.splice(G.notes.indexOf(n),1);}
+  G.si++;
+  renderOdai();updateHud();
+  if(G.hp<=0){endGame("dead");return;}
+  if(G.si>=G.slots.length)formulaComplete();
+  else startSlot();
+}
+function formulaComplete(){
+  const f=curF();
+  G.typer=null;
+  sfx.chord();
+  if(!G.formulaMissed){G.money+=20000;bigMsg("式 完成!! +¥20,000","var(--gold)",36);}
+  else bigMsg("次の式へ","var(--sub)",30);
+  // 完成形+解説を短時間表示
+  $("pAsk").innerHTML=`<span style="color:var(--ok)">✔ ${esc(f.name)}</span> — <span style="color:#e8d9a8">${esc(f.note||"")}</span>`;
+  $("pInput").innerHTML="";$("pChoices").innerHTML="";
+  G.transition=1.6;
+  updateHud();
+}
+function afterTransition(){
+  G.ci++;
+  loadFormulaRhythm();
+}
+function judgePop(msg,color){
+  const j=$("judgePop");j.textContent=msg;j.style.color=color;
+  j.classList.remove("show");void j.offsetWidth;j.classList.add("show");
+}
+function updateCombo(){
+  const n=$("comboN"),l=$("comboL");
+  if(G.combo>=2){n.style.display="block";l.style.display="block";n.textContent=G.combo;
+    n.style.transform="scale(1.25)";setTimeout(()=>n.style.transform="scale(1)",90);}
+  else{n.style.display="none";l.style.display="none";}
+}
+function updateHud(){
+  $("hearts").textContent="❤".repeat(Math.max(0,G.hp))+"♡".repeat(Math.max(0,5-G.hp));
+  $("scoreBox").textContent=yen(G.money);
+  $("modeInfo").textContent=G.mode==="rhythm"?`リズム暗記【${G.fkey}】${G.diff.name}・${rhythmAnswerMode==="click"?"4択":"タイピング"}  ${G.ci+1}/${G.course.length}式`:"";
+}
+// ---------- メインループ(リズム) ----------
+function loop(){
+  G.lastFrame=performance.now();
+  cancelAnimationFrame(G.raf);
+  const step=(now)=>{
+    if(!G.running)return;
+    const dt=Math.min(.05,(now-G.lastFrame)/1000);
+    G.lastFrame=now;G.time+=dt;
+    // メトロノーム
+    G.beatT+=dt;
+    if(G.beatT>=0.55){G.beatT-=0.55;sfx.beat(G.beatN++);}
+    // 式間トランジション
+    if(G.transition>0){
+      G.transition-=dt;
+      if(G.transition<=0)afterTransition();
+      G.raf=requestAnimationFrame(step);return;
+    }
+    // ノーツ生成: アクティブスロット以降を先行スポーン(最大3枚場に)
+    G.noteTimer-=dt;
+    if(G.noteTimer<=0&&G.spawned<G.slots.length&&G.notes.length<3){
+      spawnNote(G.spawned);G.spawned++;G.noteTimer=G.diff.gap;
+    }
+    // ノーツ落下
+    const H=$("lanes").clientHeight;
+    for(const n of G.notes.slice()){
+      n.y+=n.vy*dt;
+      if(n.y>H-20){
+        n.y=H-20;
+        if(n.slotIdx===G.si){
+          // アクティブノーツのみ猶予カウント→ミス。先のノーツはラインで待機
+          n.graceLeft-=dt;
+          n.el.style.opacity=0.5+0.5*Math.max(0,n.graceLeft)/0.7;
+          if(n.graceLeft<=0)missSlot();
+        }
+      }
+      n.el.style.top=n.y+"px";
+      n.el.classList.toggle("active",n.slotIdx===G.si);
+    }
+    G.raf=requestAnimationFrame(step);
+  };
+  G.raf=requestAnimationFrame(step);
+}
+
+/* ============================================================
+   練習モード(タイピング / 4択クリック)
+   ============================================================ */
+const P={
+  list:[],pi:0,fkey:"ALL",revenge:false,
+  slots:[],states:[],si:0,typer:null,hintLv:0,slotDirty:false,
+  choices:[],answered:false,formulaMissed:false,
+  results:[],money:0,slotsTotal:0,slotsFirstTry:0,missList:[],
+};
+function startPractice(list,fkey,revenge){
+  Object.assign(P,{list,pi:0,fkey,revenge:!!revenge,results:[],money:0,slotsTotal:0,slotsFirstTry:0,missList:[]});
+  show("scrTitle");show("practice");scr="practice";
+  loadFormulaPractice();
+}
+function loadFormulaPractice(){
+  const f=P.list[P.pi];
+  if(!f){endPractice();return;}
+  P.slots=enumSlots(f.parts);
+  P.states=P.slots.map(()=>'pending');
+  P.si=0;P.formulaMissed=false;
+  $("prNote").style.display="none";
+  $("prMode").textContent=(P.revenge?"復讐の地下室":"練習")+`【${P.fkey}】 回答方式: ${prAnswerMode==='type'?'タイピング':'4択クリック'}`;
+  startSlotP();
+  renderPractice();
+}
+function curFP(){return P.list[P.pi];}
+function startSlotP(){
+  if(P.si>=P.slots.length)return;
+  P.states[P.si]='active';
+  const s=P.slots[P.si];
+  P.typer=new Typer(s.target);
+  P.hintLv=0;P.slotDirty=false;P.answered=false;
+  if(prAnswerMode==='click')buildChoices();
+}
+function buildChoices(){
+  const s=P.slots[P.si];
+  const wrongs=distractors(curFP(),s,3);
+  while(wrongs.length<3)wrongs.push(s.kind==='c'?'999':'その他の項目');
+  P.choices=shuffle([{v:s.disp,ok:true},...wrongs.map(w=>({v:w,ok:false}))]);
+}
+function renderPractice(){
+  const f=curFP();if(!f)return;
+  $("prName").innerHTML=`<span class="fieldTag f${f.field}">${f.field}</span>${esc(f.name)}　<span style="color:var(--sub);font-size:13px">空欄 ${P.si<P.slots.length?CIRC[P.si]:'—'} / 全${P.slots.length}</span>`;
+  $("prFormula").innerHTML=renderFormula(f,P.states);
+  $("prScore").textContent=yen(P.money);
+  $("prProgFill").style.width=Math.round(P.pi/P.list.length*100)+"%";
+  $("prProgTxt").textContent=`${P.pi+1} / ${P.list.length} 式`+(P.revenge?"(3回完答で成仏)":"");
+  const done=P.si>=P.slots.length;
+  if(done){
+    $("prAsk").innerHTML=`<span style="color:var(--ok);font-weight:800">✔ 式 完成!</span>　Enterで次へ`;
+    $("prTypeBox").innerHTML="";$("choices").innerHTML="";
+    $("prNote").style.display="block";
+    $("prNote").innerHTML=`💡 ${esc(f.note||"")}`;
+    $("prFootMsg").textContent="Enter:次の式へ　Esc:終了";
+    $("prNextBtn").style.display="inline-block";
+    return;
+  }
+  $("prNextBtn").style.display="none";
+  const s=P.slots[P.si];
+  $("prAsk").innerHTML=`空欄 <b style="color:var(--cyan)">${CIRC[P.si]}</b> に入る${s.kind==='c'?'数値・定数':'項目'}は?`;
+  if(prAnswerMode==='type'){
+    $("choices").innerHTML="";
+    renderTypeBox();
+    $("prFootMsg").textContent="Tab:ヒント(読み開示)　F2:回答方式切替";
+  }else{
+    $("prTypeBox").innerHTML="";
+    $("choices").innerHTML=P.choices.map((c,i)=>
+      `<div class="choice" data-ci="${i}"><span class="kn">${i+1}</span>${esc(c.v)}</div>`).join("");
+    $("prFootMsg").textContent="1〜4キーまたはクリックで回答　F2:回答方式切替";
+  }
+}
+function renderTypeBox(){
+  const t=P.typer;
+  const typed=t.typedRoma+t.buf;
+  let hintHtml="";
+  if(P.hintLv>0){
+    const k=P.slots[P.si].target;
+    const reveal=k.slice(0,Math.min(k.length,P.hintLv*2));
+    hintHtml=`<span class="hintkana">💡${esc(reveal)}${reveal.length<k.length?"…":""}</span>`;
+  }
+  $("prTypeBox").innerHTML=`<span class="done">${esc(typed)}</span><span class="cursor">▍</span>${hintHtml}`;
+}
+function answerSlotP(correct,viaClick,clickedIdx){
+  const s=P.slots[P.si];
+  P.slotsTotal++;
+  if(correct){
+    P.states[P.si]='done';
+    if(!P.slotDirty)P.slotsFirstTry++;
+    const got=Math.round((2000+s.target.length*120)*Math.pow(0.6,P.hintLv)/100)*100;
+    P.money+=got;
+    sfx.note(P.si,false);
+    P.si++;
+    if(P.si>=P.slots.length){sfx.chord();if(P.revenge)revengeProgress();}
+    else startSlotP();
+    renderPractice();
+  }else{
+    // クリック誤答
+    P.slotDirty=true;P.formulaMissed=true;
+    sfx.clickNG();
+    recordMiss(curFP(),P.si);
+    const btns=$("choices").querySelectorAll(".choice");
+    btns.forEach((b,i)=>{
+      if(i===clickedIdx)b.classList.add("ng");
+      if(P.choices[i].ok)b.classList.add("ok"); else if(i!==clickedIdx)b.classList.add("dim");
+    });
+    // 正解を見せてから自動で埋める
+    setTimeout(()=>{
+      P.states[P.si]='miss';
+      P.si++;
+      if(P.si>=P.slots.length){if(P.revenge)revengeProgress();}
+      else startSlotP();
+      renderPractice();
+    },900);
+  }
+}
+function practiceKey(e){
+  if(e.key==="Escape"){endPractice(true);return;}
+  if(e.key==="F2"){togglePrMode();return;}
+  const done=P.si>=P.slots.length;
+  if(done){
+    if(e.key==="Enter"){
+      P.results.push({f:curFP(),missed:P.formulaMissed});
+      P.pi++;loadFormulaPractice();
+    }
+    return;
+  }
+  if(prAnswerMode==='click'){
+    if(/^[1-4]$/.test(e.key)){
+      const i=+e.key-1;
+      if(P.choices[i])answerSlotP(P.choices[i].ok,false,i);
+    }
+    return;
+  }
+  // タイピング回答
+  if(e.key==="Tab"){e.preventDefault();sfx.hint();P.hintLv++;P.slotDirty=true;renderTypeBox();return;}
+  if(e.ctrlKey||e.altKey||e.metaKey)return;
+  if(e.key.length!==1)return;
+  const ch=e.key.toLowerCase();
+  if(!/[a-z0-9\-+./%']/.test(ch))return;
+  ac();
+  const r=P.typer.key(ch);
+  if(r==="ng"){P.slotDirty=true;sfx.err();flashNG($("prTypeBox"));return;}
+  sfx.tick();
+  if(P.typer.done)answerSlotP(true);
+  else renderTypeBox();
+}
+function togglePrMode(){
+  prAnswerMode=prAnswerMode==='type'?'click':'type';
+  sv.set("prMode",prAnswerMode);
+  if(P.si<P.slots.length){startSlotP();}
+  $("prMode").textContent=(P.revenge?"復讐の地下室":"練習")+`【${P.fkey}】 回答方式: ${prAnswerMode==='type'?'タイピング':'4択クリック'}`;
+  renderPractice();
+}
+// クリック回答・各種ボタン
+document.addEventListener("click",e=>{
+  if(scr==="game"){
+    if(e.target.closest("#quitBtn")){endGame("quit");return;}
+    const rc=e.target.closest("[data-rci]");
+    if(rc&&rhythmAnswerMode==='click'&&!G.lockClick&&G.transition<=0){answerChoiceR(+rc.dataset.rci);}
+    return;
+  }
+  if(scr==="scrResult"){
+    if(e.target.closest("#btnRetry"))retry();
+    else if(e.target.closest("#btnRevenge"))startRevenge();
+    else if(e.target.closest("#btnTitle"))gotoTitle();
+    return;
+  }
+  if(scr!=="practice")return;
+  if(e.target.closest("#prQuitBtn")){endPractice(true);return;}
+  if(e.target.closest("#prNextBtn")){
+    if(P.si>=P.slots.length){P.results.push({f:curFP(),missed:P.formulaMissed});P.pi++;loadFormulaPractice();}
+    return;
+  }
+  if(e.target.closest("#prModeBtn")){togglePrMode();return;}
+  const c=e.target.closest(".choice");
+  if(c&&c.dataset.ci!==undefined&&P.si<P.slots.length&&prAnswerMode==='click'){
+    const i=+c.dataset.ci;
+    if(P.choices[i]&&!c.classList.contains("ng")&&!c.classList.contains("dim"))answerSlotP(P.choices[i].ok,true,i);
+  }
+});
+function revengeProgress(){
+  const f=curFP();
+  const d=missDB[f.id];
+  if(!d)return;
+  if(!P.formulaMissed){
+    d.need=(d.need||3)-1;
+    if(d.need<=0)delete missDB[f.id];
+  }else d.need=3;
+  sv.set("missDB",missDB);
+}
+function endPractice(aborted){
+  // 最後の式が完了済みで未記録なら記録
+  G.mode="practice";
+  G.money=P.money;G.maxCombo=0;G.hits=P.slotsTotal;G.justs=0;
+  G.slotsTotal=P.slotsTotal;G.slotsFirstTry=P.slotsFirstTry;
+  G.missList=P.missList;
+  endGame(aborted?"quit_practice":"clear_practice");
+}
+
+/* ============================================================
+   復讐の地下室
+   ============================================================ */
+function startRevenge(){
+  const ids=Object.keys(missDB);
+  if(!ids.length){
+    $("bestline").textContent="収監中の式はありません — まずはリズム暗記へ!";
+    setTimeout(()=>{if(scr==="scrTitle")gotoTitle();},1500);
+    return;
+  }
+  const list=ids.map(id=>FORMULAS.find(f=>f.id===id)).filter(Boolean);
+  startPractice(shuffle(list),"復讐",true);
+}
+// ---------- ミス記録 ----------
+function recordMiss(f,slotIdx){
+  if(!f)return;
+  const d=missDB[f.id]||{n:0,need:3,slots:{}};
+  d.n++;d.need=3;d.slots[slotIdx]=(d.slots[slotIdx]||0)+1;d.last=Date.now();
+  missDB[f.id]=d;sv.set("missDB",missDB);
+  const s=enumSlots(f.parts)[slotIdx];
+  const arr=(scr==="practice")?P.missList:G.missList;
+  arr.push({field:f.field,name:f.name,slot:s?s.disp:"?"});
+}
+
+/* ============================================================
+   エフェクト
+   ============================================================ */
+function explodeAt(el,big){
+  const host=$("shake");
+  const r=el.getBoundingClientRect();
+  const cx=r.left+r.width/2,cy=r.top+r.height/2;
+  const colors=["#39d8ff","#7fe7ff","#ffd700","#fff"];
+  const N=big?18:12;
+  for(let i=0;i<N;i++){
+    const p=document.createElement("div");p.className="particle";
+    p.style.background=colors[i%colors.length];
+    p.style.left=cx+"px";p.style.top=cy+"px";
+    host.appendChild(p);
+    const a=Math.random()*Math.PI*2,d=60+Math.random()*(big?130:90);
+    p.animate([{transform:"translate(0,0) scale(1)",opacity:1},
+      {transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) scale(.2)`,opacity:0}],
+      {duration:500+Math.random()*250,easing:"cubic-bezier(.1,.8,.3,1)"}).onfinish=()=>p.remove();
+  }
+}
+function rewardPop(el,txt){
+  const host=$("shake");
+  const r=el.getBoundingClientRect();
+  const d=document.createElement("div");d.className="reward";d.textContent=txt;
+  d.style.left=(r.left+6)+"px";d.style.top=(r.top-8)+"px";
+  host.appendChild(d);setTimeout(()=>d.remove(),1000);
+}
+function bigMsg(msg,color,size){
+  const b=$("bigMsg");b.textContent=msg;b.style.color=color||"var(--cyan)";
+  b.style.fontSize=(size||48)+"px";
+  b.classList.remove("show");void b.offsetWidth;b.classList.add("show");
+}
+function shake(){
+  $("shake").classList.remove("shaking");void $("shake").offsetWidth;$("shake").classList.add("shaking");
+  const v=$("vignette");v.style.opacity=1;setTimeout(()=>v.style.opacity=0,220);
+}
+function flashNG(el){
+  el.style.textShadow="0 0 12px var(--ng)";
+  setTimeout(()=>el.style.textShadow="",120);
+}
+
+/* ============================================================
+   リザルト
+   ============================================================ */
+let lastRun=null;
+function endGame(reason){
+  G.running=false;cancelAnimationFrame(G.raf);
+  if(reason==="quit"){gotoTitle();return;}
+  if(reason==="quit_practice"&&G.slotsTotal===0){gotoTitle();return;}
+  if(reason==="dead")sfx.gameover();else sfx.fanfare();
+  lastRun={mode:G.mode==="rhythm"?"rhythm":"practice",fkey:G.fkey||P.fkey,diff:G.diff,revenge:P.revenge,plist:P.list};
+  const memPct=G.slotsTotal?Math.round(G.slotsFirstTry/G.slotsTotal*100):0;
+  const title=titleFor(G.money);
+  if(G.money>best.money){best={money:G.money};sv.set("best",best);}
+  $("resTitle").textContent=reason==="dead"?"― 力尽きた… ―":G.mode==="rhythm"?"― コース クリア ―":"― 練習 終了 ―";
+  $("resTitle").style.color=reason==="dead"?"var(--ng)":"var(--gold)";
+  $("resRank").textContent=`称号「${title}」`;
+  const nt=nextTitle(G.money);
+  $("resMoney").textContent=yen(G.money);
+  $("resSub").textContent=(nt?`次の称号「${nt.name}」まであと ${yen(nt.need)}`:"最高称号に到達!")+(G.money>=best.money&&G.money>0?"  ★自己ベスト!":"");
+  $("resGrid").innerHTML=`
+    <div>正答スロット <b>${G.slotsFirstTry}</b> / ${G.slotsTotal}</div>
+    <div>最大コンボ <b>${G.maxCombo}</b></div>
+    <div>JUST判定 <b>${G.justs}</b></div>
+    <div>タイプ正確率 <b>${accuracy()}%</b></div>`;
+  $("memRate").innerHTML=`式構造の暗記率: <b>${memPct}%</b> ${memPct>=90?"— 完璧!本試験で立式即答レベル":memPct>=70?"— 良好。あと一息":memPct>=50?"— 復讐の地下室で固めよう":"— まだ構造が入っていない…練習モードへ"}`;
+  const misses=(G.missList||[]).slice(0,8);
+  $("resMiss").innerHTML=misses.length?
+    "<b style='color:var(--ng)'>█ 収監された式(復讐の地下室で待つ)</b>"+
+    misses.map(m=>`<div class="mi2">・【${m.field}】${esc(m.name)} — 空欄「${esc(m.slot)}」</div>`).join(""):
+    "<span style='color:var(--ok)'>ノーミス!収監された式なし。</span>";
+  show("scrResult");
+}
+function retry(){
+  if(!lastRun)return gotoTitle();
+  if(lastRun.mode==="rhythm")startRhythm(lastRun.fkey,lastRun.diff||DIFFS[1]);
+  else if(lastRun.revenge)startRevenge();
+  else startPractice(lastRun.plist&&lastRun.plist.length?lastRun.plist:fieldPool(lastRun.fkey),lastRun.fkey);
+}
+
+/* ============================================================
+   グローバルキー
+   ============================================================ */
+document.addEventListener("keydown",e=>{
+  if(e.key==="Tab")e.preventDefault();
+  if(e.isComposing)return;
+  if((e.key==="m"||e.key==="M")&&scr!=="game"&&scr!=="practice"){soundOn=!soundOn;sv.set("sound",soundOn);return;}
+  if(scr==="game"){rhythmKey(e);return;}
+  if(scr==="practice"){practiceKey(e);return;}
+  if(scr==="scrResult"){
+    if(e.key==="r"||e.key==="R")retry();
+    else if(e.key==="v"||e.key==="V")startRevenge();
+    else if(e.key==="Escape")gotoTitle();
+    return;
+  }
+  if(scr==="scrHow"){if(e.key==="Escape")gotoTitle();return;}
+  if(scr==="scrTitle"||scr==="scrField"||scr==="scrDiff"||scr==="scrAns"||scr==="scrList"){menuKey(e);return;}
+});
+// PWA(GitHub Pages等で開いたときのみ)
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+// 起動
+gotoTitle();
+
+</script>
+</body>
+</html>
